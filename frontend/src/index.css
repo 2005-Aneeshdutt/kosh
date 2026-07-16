@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Sora:wght@600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -8,20 +8,47 @@
   * {
     @apply border-border;
   }
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
   body {
-    @apply bg-background text-ink font-sans antialiased;
+    @apply bg-canvas text-ink font-sans antialiased;
   }
 }
 
-/* Thin, unobtrusive scrollbars for feed/table containers. */
-.scroll-thin::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-.scroll-thin::-webkit-scrollbar-thumb {
-  background: rgb(148 163 184 / 0.4);
-  border-radius: 9999px;
-}
-.scroll-thin::-webkit-scrollbar-track {
-  background: transparent;
+@layer utilities {
+  .font-display {
+    font-family: "Sora", "Inter", sans-serif;
+  }
+  /* Frosted card surface used across the product. */
+  .glass {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  /* Subtle dotted grid backdrop for hero surfaces. */
+  .grid-bg {
+    background-image: radial-gradient(rgba(15, 23, 42, 0.05) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  .text-gradient {
+    background: linear-gradient(135deg, #3395ff 0%, #6366f1 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .scroll-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scroll-thin::-webkit-scrollbar-thumb {
+    background: rgb(148 163 184 / 0.4);
+    border-radius: 9999px;
+  }
+  .scroll-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
 }
