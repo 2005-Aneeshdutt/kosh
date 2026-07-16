@@ -21,6 +21,7 @@ from backend.models import database
 from backend.routers import (
     agents,
     auth,
+    chat,
     collections,
     dashboard,
     forecast,
@@ -73,6 +74,7 @@ app.include_router(upload.router)
 app.include_router(forecast.router)
 app.include_router(settings_router.router)
 app.include_router(live.router)
+app.include_router(chat.router)
 
 
 # ── Serve the built React SPA from the same origin ──────────
