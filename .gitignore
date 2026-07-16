@@ -1,0 +1,17 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+kosh.db
+seed/mock_dataset.json
+
+# Env
+.env
+
+# Node
+node_modules/
+frontend/dist/
+
+# Editor / OS
+.DS_Store
+.vscode/
