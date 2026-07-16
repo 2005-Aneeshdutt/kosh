@@ -21,6 +21,7 @@ from backend.models import database
 from backend.routers import (
     agents,
     auth,
+    autopilot,
     chat,
     collections,
     dashboard,
@@ -55,6 +56,15 @@ async def _startup() -> None:
 
     simulator.start()
 
+    # Seed the Autopilot approval queue with an initial scan (loop stays off
+    # until the user enables Autopilot).
+    from backend.services import autopilot
+
+    try:
+        autopilot.scan()
+    except Exception:  # pragma: no cover
+        pass
+
 
 @app.get("/api/health")
 def health() -> dict:
@@ -75,6 +85,7 @@ app.include_router(forecast.router)
 app.include_router(settings_router.router)
 app.include_router(live.router)
 app.include_router(chat.router)
+app.include_router(autopilot.router)
 
 
 # ── Serve the built React SPA from the same origin ──────────

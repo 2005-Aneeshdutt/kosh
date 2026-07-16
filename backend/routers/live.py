@@ -97,7 +97,7 @@ def checkout_pay(req: PayRequest) -> dict:
 
 # ── Simulator ───────────────────────────────────────────────
 @router.post("/simulator/{action}")
-def simulator_control(action: str) -> dict:
+async def simulator_control(action: str) -> dict:
     if action == "start":
         simulator.start()
     elif action == "stop":
