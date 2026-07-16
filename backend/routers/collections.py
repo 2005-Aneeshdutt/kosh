@@ -1,0 +1,69 @@
+"""Collections endpoints: debtor list + single-invoice reminder."""
+from __future__ import annotations
+
+from datetime import datetime, timezone
+
+from fastapi import APIRouter, HTTPException
+
+from backend.agents.collect_agent import build_reminder
+from backend.agents.store import store
+from backend.models.schemas import DebtorRow, SendReminderRequest, SendReminderResponse
+from backend.razorpay_client.client import get_client
+from backend.services import debtor_scorer
+
+router = APIRouter(prefix="/api/collections", tags=["collections"])
+
+
+@router.get("/debtors", response_model=list[DebtorRow])
+def debtors() -> list[DebtorRow]:
+    snap = store.snapshot()
+    invoices = [
+        i for i in snap["invoices"]
+        if i["status"] in {"overdue", "pending", "partially_paid"}
+    ]
+    debtor_scorer.score_all(invoices)
+    invoices.sort(key=lambda i: i["risk_score"], reverse=True)
+
+    return [
+        DebtorRow(
+            id=i["id"],
+            customer_name=i["customer_name"],
+            customer_email=i["customer_email"],
+            customer_phone=i["customer_phone"],
+            amount=i["amount"],
+            due_date=i["due_date"],
+            days_overdue=i["days_overdue"],
+            status=i["status"],
+            risk_score=i["risk_score"],
+            risk_band=debtor_scorer.risk_band(i["risk_score"]),
+            reminders_sent=i.get("reminders_sent", 0),
+            last_reminder_date=i.get("last_reminder_date"),
+            payment_link_url=i.get("payment_link_url"),
+        )
+        for i in invoices
+    ]
+
+
+@router.post("/send-reminder", response_model=SendReminderResponse)
+def send_reminder(req: SendReminderRequest) -> SendReminderResponse:
+    snap = store.snapshot()
+    invoice = next((i for i in snap["invoices"] if i["id"] == req.invoice_id), None)
+    if invoice is None:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+
+    client = get_client()
+    link = client.create_payment_link(invoice)
+    invoice["payment_link_id"] = link["id"]
+    invoice["payment_link_url"] = link["short_url"]
+
+    message, tone, _ = build_reminder(invoice, link["short_url"])
+    invoice["reminders_sent"] = invoice.get("reminders_sent", 0) + 1
+    invoice["last_reminder_date"] = datetime.now(timezone.utc).isoformat()
+
+    return SendReminderResponse(
+        invoice_id=invoice["id"],
+        message=message,
+        payment_link_url=link["short_url"],
+        reminders_sent=invoice["reminders_sent"],
+        tone=tone,
+    )
