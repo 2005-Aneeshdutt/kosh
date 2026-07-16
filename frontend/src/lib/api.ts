@@ -251,7 +251,49 @@ export const api = {
   mailDetail: (id: string) => get<any>(`/api/mail/${id}`),
   simulator: (action: "start" | "stop" | "tick") => post<any>(`/api/simulator/${action}`),
   simulatorStatus: () => get<{ running: boolean }>("/api/simulator/status"),
+
+  // autopilot
+  autopilotStatus: () => get<AutopilotStatus>("/api/autopilot/status"),
+  autopilotStart: () => post<AutopilotStatus>("/api/autopilot/start"),
+  autopilotStop: () => post<AutopilotStatus>("/api/autopilot/stop"),
+  autopilotScan: () => post<{ created: number; auto_executed: number; pending: number }>("/api/autopilot/scan"),
+  autopilotProposals: (status?: string) =>
+    get<{ proposals: Proposal[] }>(`/api/autopilot/proposals${status ? `?status=${status}` : ""}`),
+  autopilotApprove: (id: string) => post<Proposal>(`/api/autopilot/proposals/${id}/approve`),
+  autopilotReject: (id: string) => post<Proposal>(`/api/autopilot/proposals/${id}/reject`),
+  autopilotPolicy: (p: { auto_max_amount?: number; auto_max_risk?: number }) =>
+    post<any>("/api/autopilot/policy", p),
 };
+
+export interface Proposal {
+  id: string;
+  type: string;
+  tone: string;
+  invoice_id: string;
+  customer_name: string;
+  customer_email: string;
+  amount: number;
+  days_overdue: number;
+  risk_score: number;
+  risk_band: string;
+  confidence: number;
+  rationale: string;
+  requires_approval: boolean;
+  status: string;
+  created_at: string;
+  executed_at?: string | null;
+  result?: string | null;
+}
+export interface AutopilotStatus {
+  running: boolean;
+  pending: number;
+  auto_executed: number;
+  approved: number;
+  rejected: number;
+  pending_value: number;
+  managed_value: number;
+  policy: { auto_max_amount: number; auto_max_risk: number; always_approve: string[] };
+}
 
 /** Subscribe to the AI agent activity stream. Returns an unsubscribe fn. */
 export function subscribeAgentEvents(onEvent: (e: AgentEvent) => void): () => void {
