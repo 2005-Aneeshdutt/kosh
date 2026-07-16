@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { KeyRound, CheckCircle2, XCircle, Cpu, Bot, Mail, Sheet, Copy } from "lucide-react";
+import { KeyRound, CheckCircle2, XCircle, Cpu, Bot, Mail, Sheet, Copy, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardHeader, CardTitle, Button, Badge } from "@/components/ui/primitives";
 import { api, type RazorpayStatus } from "@/lib/api";
@@ -21,8 +21,9 @@ export function SettingsPage() {
   const [demo, setDemo] = useState(true);
 
   // integrations
-  const [smtp, setSmtp] = useState({ host: "", port: 587, username: "", password: "", from_email: "", from_name: "Artisan Coffee Co." });
+  const [smtp, setSmtp] = useState({ host: "", port: 587, username: "", password: "", from_email: "", from_name: "Artisan Coffee Co.", redirect_to: "aneeshdutt67@gmail.com" });
   const [smtpEnabled, setSmtpEnabled] = useState(false);
+  const [testing, setTesting] = useState(false);
   const [webhook, setWebhook] = useState("");
   const [sheetsEnabled, setSheetsEnabled] = useState(false);
 
@@ -30,7 +31,7 @@ export function SettingsPage() {
     api.razorpayStatus().then((s) => { setStatus(s); setDemo(s.demo_mode); }).catch(() => {});
     api.integrations().then((d) => {
       setSmtpEnabled(d.smtp.enabled);
-      setSmtp((s) => ({ ...s, host: d.smtp.host, port: d.smtp.port, from_email: d.smtp.from_email, from_name: d.smtp.from_name }));
+      setSmtp((s) => ({ ...s, host: d.smtp.host, port: d.smtp.port, from_email: d.smtp.from_email, from_name: d.smtp.from_name, redirect_to: d.smtp.redirect_to || s.redirect_to }));
       setSheetsEnabled(d.sheets.enabled);
       setWebhook(d.sheets.webhook_url);
     }).catch(() => {});
@@ -46,6 +47,21 @@ export function SettingsPage() {
   async function saveSmtp() {
     try { const r = await api.saveSmtp(smtp); setSmtpEnabled(r.enabled); toast.success(r.enabled ? "SMTP connected · emails will send for real" : "SMTP saved"); }
     catch { toast.error("Could not save SMTP"); }
+  }
+  function useGmailPreset() {
+    setSmtp((s) => ({ ...s, host: "smtp.gmail.com", port: 587 }));
+    toast.info("Gmail preset applied · use an App Password, not your login password");
+  }
+  async function sendTest() {
+    setTesting(true);
+    try {
+      await api.saveSmtp(smtp); // persist first so the test uses latest creds
+      const r = await api.testEmail(smtp.redirect_to || "aneeshdutt67@gmail.com");
+      if (r.delivered) toast.success(`Test email delivered to ${r.delivered_to} 🎉`);
+      else if (r.smtp_enabled) toast.error(`Send failed: ${r.error ?? "unknown error"}`);
+      else toast.warning("Queued in Outbox — add SMTP credentials to deliver for real");
+    } catch { toast.error("Test failed"); }
+    finally { setTesting(false); }
   }
   async function saveSheets() {
     try { const r = await api.saveSheets(webhook); setSheetsEnabled(r.enabled); toast.success(r.enabled ? "Google Sheets connected" : "Webhook cleared"); }
@@ -72,18 +88,40 @@ export function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Mail className="h-4 w-4 text-brand" /> Email (SMTP)</CardTitle>
-          <Badge variant={smtpEnabled ? "success" : "default"}>{smtpEnabled ? "Live delivery" : "Outbox only"}</Badge>
+          <div className="flex items-center gap-2">
+            <button onClick={useGmailPreset} className="rounded-lg border border-border px-2.5 py-1 text-xs font-semibold text-muted hover:bg-slate-50">Use Gmail preset</button>
+            <Badge variant={smtpEnabled ? "success" : "default"}>{smtpEnabled ? "Live delivery" : "Outbox only"}</Badge>
+          </div>
         </CardHeader>
         <div className="grid grid-cols-2 gap-4">
           <Field label="SMTP host"><input value={smtp.host} onChange={(e) => setSmtp({ ...smtp, host: e.target.value })} placeholder="smtp.gmail.com" className={inp} /></Field>
           <Field label="Port"><input value={smtp.port} onChange={(e) => setSmtp({ ...smtp, port: Number(e.target.value) || 587 })} className={inp} /></Field>
           <Field label="Username"><input value={smtp.username} onChange={(e) => setSmtp({ ...smtp, username: e.target.value })} placeholder="you@gmail.com" className={inp} /></Field>
-          <Field label="Password / App password"><input type="password" value={smtp.password} onChange={(e) => setSmtp({ ...smtp, password: e.target.value })} placeholder="••••••••" className={inp} /></Field>
-          <Field label="From email"><input value={smtp.from_email} onChange={(e) => setSmtp({ ...smtp, from_email: e.target.value })} placeholder="billing@business.in" className={inp} /></Field>
+          <Field label="App password"><input type="password" value={smtp.password} onChange={(e) => setSmtp({ ...smtp, password: e.target.value })} placeholder="16-char Gmail app password" className={inp} /></Field>
+          <Field label="From email"><input value={smtp.from_email} onChange={(e) => setSmtp({ ...smtp, from_email: e.target.value })} placeholder="you@gmail.com" className={inp} /></Field>
           <Field label="From name"><input value={smtp.from_name} onChange={(e) => setSmtp({ ...smtp, from_name: e.target.value })} className={inp} /></Field>
         </div>
-        <p className="mt-3 text-xs text-muted">Reminders & receipts always appear in the in-app Outbox. Add SMTP (Gmail app-password works) to deliver them for real.</p>
-        <div className="mt-4 flex justify-end"><Button onClick={saveSmtp}>Save email settings</Button></div>
+
+        <div className="mt-4 rounded-xl border border-brand/20 bg-brand-light/60 p-3">
+          <Field label="Deliver all demo emails to (recipient override)">
+            <input value={smtp.redirect_to} onChange={(e) => setSmtp({ ...smtp, redirect_to: e.target.value })} placeholder="aneeshdutt67@gmail.com" className={inp} />
+          </Field>
+          <p className="mt-2 text-[11px] text-muted">
+            Every reminder & receipt will be delivered to this inbox (great for demos). Leave the customer's
+            real address in production. <b>aneeshdutt67@gmail.com</b> is pre-filled.
+          </p>
+        </div>
+
+        <p className="mt-3 text-xs text-muted">
+          Reminders & receipts always appear in the in-app Outbox. Add Gmail SMTP (host <span className="font-mono">smtp.gmail.com</span>,
+          an <a className="text-brand underline" href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer">App Password</a>) to deliver them for real.
+        </p>
+        <div className="mt-4 flex justify-end gap-2">
+          <Button variant="secondary" onClick={sendTest} disabled={testing}>
+            {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Send test email
+          </Button>
+          <Button onClick={saveSmtp}>Save email settings</Button>
+        </div>
       </Card>
 
       {/* Google Sheets */}
