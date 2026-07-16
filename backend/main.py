@@ -18,7 +18,16 @@ from fastapi.staticfiles import StaticFiles
 
 from backend.config import settings
 from backend.models import database
-from backend.routers import agents, collections, dashboard, forecast, settings as settings_router, upload
+from backend.routers import (
+    agents,
+    auth,
+    collections,
+    dashboard,
+    forecast,
+    live,
+    settings as settings_router,
+    upload,
+)
 
 FRONTEND_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 
@@ -38,8 +47,12 @@ app.add_middleware(
 
 
 @app.on_event("startup")
-def _startup() -> None:
+async def _startup() -> None:
     database.init_db()
+    # Kick off the live payment simulator so the dashboard is alive on load.
+    from backend.services.simulator import simulator
+
+    simulator.start()
 
 
 @app.get("/api/health")
@@ -52,12 +65,14 @@ def health() -> dict:
     }
 
 
+app.include_router(auth.router)
 app.include_router(dashboard.router)
 app.include_router(agents.router)
 app.include_router(collections.router)
 app.include_router(upload.router)
 app.include_router(forecast.router)
 app.include_router(settings_router.router)
+app.include_router(live.router)
 
 
 # ── Serve the built React SPA from the same origin ──────────
