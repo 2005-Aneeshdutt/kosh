@@ -43,6 +43,12 @@ class LiveData:
             self._counter = 900000
             # Invoices currently being paid (guards against double-capture).
             self._claims: set[str] = set()
+            # Bumped on every mutation so caches can detect staleness.
+            self._version = 0
+
+    @property
+    def version(self) -> int:
+        return self._version
 
     # ── Atomic invoice claim (concurrency-safe payment) ─────
     def claim_invoice(self, invoice_id: str) -> bool:
@@ -146,6 +152,7 @@ class LiveData:
             self.payments.insert(0, payment)
             if len(self.payments) > 600:
                 self.payments = self.payments[:600]
+            self._version += 1
         bus.publish_live("payment", payment)
         self._broadcast_metrics()
         return payment
@@ -160,6 +167,7 @@ class LiveData:
             inv["risk_score"] = 0.0
             inv["paid_at"] = _iso(_now())
             inv["paid_by_payment"] = payment_id
+            self._version += 1
             snapshot = dict(inv)
         bus.publish_live("invoice_paid", snapshot)
         return snapshot
