@@ -5,10 +5,9 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException
 
-from backend.agents.collect_agent import build_reminder, send_reminder_email
+from backend.agents.collect_agent import build_reminder, checkout_link, send_reminder_email
 from backend.agents.store import store
 from backend.models.schemas import DebtorRow, SendReminderRequest, SendReminderResponse
-from backend.razorpay_client.client import get_client
 from backend.services import debtor_scorer
 
 router = APIRouter(prefix="/api/collections", tags=["collections"])
@@ -51,21 +50,19 @@ def send_reminder(req: SendReminderRequest) -> SendReminderResponse:
     if invoice is None:
         raise HTTPException(status_code=404, detail="Invoice not found")
 
-    client = get_client()
-    link = client.create_payment_link(invoice)
-    invoice["payment_link_id"] = link["id"]
-    invoice["payment_link_url"] = link["short_url"]
+    pay_url = checkout_link(invoice)
+    invoice["payment_link_url"] = pay_url
 
-    message, tone, _ = build_reminder(invoice, link["short_url"])
+    message, tone, _ = build_reminder(invoice, pay_url)
     invoice["reminders_sent"] = invoice.get("reminders_sent", 0) + 1
     invoice["last_reminder_date"] = datetime.now(timezone.utc).isoformat()
 
-    email = send_reminder_email(invoice, message, link["short_url"])
+    email = send_reminder_email(invoice, message, pay_url)
 
     return SendReminderResponse(
         invoice_id=invoice["id"],
         message=message,
-        payment_link_url=link["short_url"],
+        payment_link_url=pay_url,
         reminders_sent=invoice["reminders_sent"],
         tone=tone,
         email_id=email["id"],

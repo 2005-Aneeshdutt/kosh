@@ -89,15 +89,14 @@ def tool_pay_link(invoice_id: str) -> tuple[str, list]:
 
 
 def tool_send_reminder(invoice_id: str) -> tuple[str, list]:
-    from backend.agents.collect_agent import build_reminder, send_reminder_email
-    from backend.razorpay_client.client import get_client
+    from backend.agents.collect_agent import build_reminder, checkout_link, send_reminder_email
 
     inv = live.get_invoice(invoice_id)
     if not inv:
         return f"I couldn't find invoice {invoice_id}.", []
-    link = get_client().create_payment_link(inv)
-    message, tone, _ = build_reminder(inv, link["short_url"])
-    email = send_reminder_email(inv, message, link["short_url"])
+    pay_url = checkout_link(inv)
+    message, tone, _ = build_reminder(inv, pay_url)
+    email = send_reminder_email(inv, message, pay_url)
     dest = "delivered" if email["delivered"] else "queued in the Outbox"
     reply = (f"Done — I sent a {tone} payment reminder to {inv['customer_name']} for "
              f"{_rupees(inv['amount'])} ({inv['id']}). The email is {dest}.")

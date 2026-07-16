@@ -134,8 +134,7 @@ def generate_proposals() -> list[dict[str, Any]]:
 
 # ── Execution ───────────────────────────────────────────────
 def _execute(proposal: dict[str, Any], auto: bool) -> dict[str, Any]:
-    from backend.agents.collect_agent import build_reminder, send_reminder_email
-    from backend.razorpay_client.client import get_client
+    from backend.agents.collect_agent import build_reminder, checkout_link, send_reminder_email
 
     inv = live.get_invoice(proposal["invoice_id"])
     if not inv:
@@ -146,13 +145,13 @@ def _execute(proposal: dict[str, Any], auto: bool) -> dict[str, Any]:
     ptype = proposal["type"]
     try:
         if ptype in {"reminder", "escalate", "discount_offer"}:
-            link = get_client().create_payment_link(inv)
-            message, tone, _ = build_reminder(inv, link["short_url"])
+            pay_url = checkout_link(inv)
+            message, tone, _ = build_reminder(inv, pay_url)
             if ptype == "discount_offer":
                 message = (f"Special offer for {inv['customer_name']}: settle invoice "
                            f"{inv['id']} within 48 hours and get 2% off. "
-                           f"Pay now: {link['short_url']}")
-            email = send_reminder_email(inv, message, link["short_url"])
+                           f"Pay now: {pay_url}")
+            email = send_reminder_email(inv, message, pay_url)
             proposal["result"] = (
                 f"{'Discount offer' if ptype == 'discount_offer' else 'Reminder'} "
                 f"{'emailed' if email['delivered'] else 'queued'} to {inv['customer_name']}"

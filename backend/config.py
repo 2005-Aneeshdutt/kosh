@@ -31,6 +31,22 @@ class Settings:
         self.backend_port: int = int(os.getenv("BACKEND_PORT", "8000"))
         self.database_url: str = os.getenv("DATABASE_URL", "sqlite:///./kosh.db")
 
+        # Public base URL used to build clickable payment links inside emails.
+        # For a demo on the same machine, localhost works. When sharing links to
+        # another device, set KOSH_PUBLIC_URL to a tunnel/deploy URL (e.g. ngrok).
+        self.public_url: str = os.getenv("KOSH_PUBLIC_URL", f"http://localhost:{self.backend_port}").rstrip("/")
+
+        # Optional SMTP config (Gmail etc.) so real email delivery survives
+        # restarts. These can also be set at runtime via Settings → Email.
+        self.smtp_host: str = os.getenv("KOSH_SMTP_HOST", "")
+        self.smtp_port: int = int(os.getenv("KOSH_SMTP_PORT", "587"))
+        self.smtp_user: str = os.getenv("KOSH_SMTP_USER", "")
+        self.smtp_password: str = os.getenv("KOSH_SMTP_PASSWORD", "")
+        self.smtp_from: str = os.getenv("KOSH_SMTP_FROM", "")
+        self.smtp_from_name: str = os.getenv("KOSH_SMTP_FROM_NAME", "Artisan Coffee Co. (via Kosh)")
+        # Deliver every demo email here regardless of the customer's address.
+        self.mail_redirect: str = os.getenv("KOSH_MAIL_REDIRECT", "")
+
         origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
         self.cors_origins: list[str] = [o.strip() for o in origins.split(",") if o.strip()]
 

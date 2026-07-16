@@ -12,10 +12,22 @@ from datetime import datetime, timezone
 
 from backend.agents.bus import emit
 from backend.agents.state import MerchantState
+from backend.config import settings
 from backend.razorpay_client.client import get_client
 from backend.services import debtor_scorer, llm, mailer
 
 AGENT = "collect"
+
+
+def checkout_link(inv: dict) -> str:
+    """The URL a customer clicks to pay this invoice.
+
+    In demo mode this is Kosh's own live checkout page (real, working). In live
+    Razorpay mode we use the real hosted payment-link short URL.
+    """
+    if settings.demo_mode:
+        return f"{settings.public_url}/pay/{inv['id']}"
+    return get_client().create_payment_link(inv).get("short_url") or f"{settings.public_url}/pay/{inv['id']}"
 
 
 def _rupees(paisa: int) -> str:
@@ -133,16 +145,15 @@ async def collect_agent_node(state: MerchantState) -> MerchantState:
         )
         await asyncio.sleep(0.25)
 
-        link = client.create_payment_link(inv)
-        inv["payment_link_id"] = link["id"]
-        inv["payment_link_url"] = link["short_url"]
+        pay_url = checkout_link(inv)
+        inv["payment_link_url"] = pay_url
 
-        message, tone, used_llm = build_reminder(inv, link["short_url"])
+        message, tone, used_llm = build_reminder(inv, pay_url)
         inv["reminders_sent"] = inv.get("reminders_sent", 0) + 1
         inv["last_reminder_date"] = datetime.now(timezone.utc).isoformat()
 
         # Dispatch the reminder as a real (or outbox) email with the pay link.
-        email = send_reminder_email(inv, message, link["short_url"])
+        email = send_reminder_email(inv, message, pay_url)
 
         actions.append(
             {
