@@ -27,6 +27,43 @@ streams to the dashboard's **Agent Activity feed** over Server-Sent Events.
 
 ---
 
+## A live, shippable product — not a mockup
+
+Kosh behaves like a real SaaS you sign into and operate:
+
+- **Sign in / out.** Token-based auth with a merchant profile. One-click demo
+  sign-in (`demo@artisancoffee.in` / `razorpay`).
+- **A real Razorpay-style checkout.** Every invoice has a live payment page
+  (`/pay/:invoice`) with Card / UPI / Netbanking tabs, card-number formatting +
+  brand detection, predictable **test cards** (`4111 1111 1111 1111` succeeds,
+  `4000 0000 0000 0002` declines), a processing animation, and a receipt.
+- **The live loop.** The moment a customer pays, the **merchant dashboard
+  updates in real time** over a global SSE stream: revenue counter animates up,
+  the invoice clears from Collections, the payment appears in the Ledger, the
+  Activity feed logs it, and a receipt lands in the Outbox. *Open the pay link in
+  one tab, pay, and watch the dashboard in another move.*
+- **Email integration.** Every AI reminder and payment receipt is rendered as a
+  branded HTML email in an in-app **Outbox** — and **actually delivered over
+  SMTP** once you add credentials (Settings → Email; a Gmail app-password works).
+- **Real-time sheet sync.** A live **Ledger** page streams every transaction,
+  exports to **CSV**, and pushes to a **Google Sheet** in real time via an Apps
+  Script webhook (Settings → Google Sheets; the 12-line script is provided).
+- **Always-alive data.** A background **payment simulator** streams realistic
+  transactions so the dashboard is never static (toggle it from the header).
+
+### The 30-second "wow" demo
+
+1. **Sign in** (one click).
+2. Click **Run All Agents** — watch the four agents work the feed; 6 reminder
+   emails appear in the **Outbox**.
+3. Go to **Collections**, click **Pay link** on an overdue invoice → the
+   Razorpay-style checkout opens in a new tab.
+4. Pay with `4111 1111 1111 1111`. Flip back to the **Dashboard** — revenue ticks
+   up live, the invoice is gone from Collections, the **Ledger** has a new row,
+   and the receipt is in the **Outbox**.
+
+---
+
 ## Zero-config demo mode
 
 The app runs **fully offline with realistic mock data** — no Razorpay keys, no
