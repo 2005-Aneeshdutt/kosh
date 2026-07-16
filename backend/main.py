@@ -65,6 +65,20 @@ async def _startup() -> None:
     except Exception:  # pragma: no cover
         pass
 
+    # Apply SMTP config from .env if provided (Gmail etc.) so real email
+    # delivery works out of the box without touching the Settings UI.
+    from backend.services import mailer
+
+    if settings.smtp_host and settings.smtp_user:
+        mailer.configure_smtp(
+            host=settings.smtp_host, port=settings.smtp_port,
+            username=settings.smtp_user, password=settings.smtp_password,
+            from_email=settings.smtp_from or settings.smtp_user,
+            from_name=settings.smtp_from_name,
+        )
+    if settings.mail_redirect:
+        mailer.set_redirect(settings.mail_redirect)
+
 
 @app.get("/api/health")
 def health() -> dict:
