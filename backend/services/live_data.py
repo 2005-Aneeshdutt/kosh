@@ -41,6 +41,23 @@ class LiveData:
             self.settlements: list[dict[str, Any]] = mock_data.generate_settlements()
             debtor_scorer.score_all(self.invoices)
             self._counter = 900000
+            # Invoices currently being paid (guards against double-capture).
+            self._claims: set[str] = set()
+
+    # ── Atomic invoice claim (concurrency-safe payment) ─────
+    def claim_invoice(self, invoice_id: str) -> bool:
+        """Atomically reserve an invoice for payment. Returns False if it's
+        already paid or another request is mid-payment for it."""
+        with self._lock:
+            inv = next((i for i in self.invoices if i["id"] == invoice_id), None)
+            if inv is None or inv["status"] == "paid" or invoice_id in self._claims:
+                return False
+            self._claims.add(invoice_id)
+            return True
+
+    def release_invoice(self, invoice_id: str) -> None:
+        with self._lock:
+            self._claims.discard(invoice_id)
 
     # ── Reads (return copies so callers can't mutate internals) ──
     def get_payments(self) -> list[dict[str, Any]]:
@@ -97,8 +114,10 @@ class LiveData:
         return metrics
 
     def _next_id(self, prefix: str) -> str:
-        self._counter += 1
-        return f"{prefix}_{self._counter:08d}"
+        with self._lock:
+            self._counter += 1
+            counter = self._counter
+        return f"{prefix}_{counter:08d}"
 
     # ── Mutations ───────────────────────────────────────────
     def add_payment(

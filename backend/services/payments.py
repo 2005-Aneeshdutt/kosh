@@ -101,32 +101,48 @@ def process_invoice_payment(
         raise ValueError("Invoice already paid")
 
     success, reason = _decide(method, details)
-    status = "captured" if success else "failed"
+
+    # A failed attempt never claims the invoice (customer can retry).
+    if not success:
+        payment = live.add_payment(
+            customer_name=inv["customer_name"], amount=inv["amount"], method=method,
+            status="failed", failure_reason=reason, source="checkout", invoice_id=invoice_id,
+        )
+        return {
+            "success": False, "status": "failed", "failure_reason": reason,
+            "payment_id": payment["id"], "amount": inv["amount"], "method": method,
+            "invoice_id": invoice_id,
+            "brand": card_brand(details.get("card_number", "")) if method == "card" else None,
+            "receipt_email_id": None,
+        }
+
+    # Successful auth — atomically claim so concurrent requests can't double-pay.
+    if not live.claim_invoice(invoice_id):
+        raise ValueError("Invoice already paid")
 
     payment = live.add_payment(
         customer_name=inv["customer_name"],
         amount=inv["amount"],
         method=method,
-        status=status,
-        failure_reason=reason,
+        status="captured",
+        failure_reason=None,
         source="checkout",
         invoice_id=invoice_id,
     )
-
     receipt: Optional[dict[str, Any]] = None
-    if success:
-        live.mark_invoice_paid(invoice_id, payment["id"])
-        receipt = _send_receipt(inv, payment, method, details)
-        sheets.push_row(
-            {
-                "type": "Payment",
-                "reference": payment["id"],
-                "party": inv["customer_name"],
-                "detail": method.upper(),
-                "amount": inv["amount"],
-                "status": "captured",
-            }
-        )
+    live.mark_invoice_paid(invoice_id, payment["id"])
+    receipt = _send_receipt(inv, payment, method, details)
+    sheets.push_row(
+        {
+            "type": "Payment",
+            "reference": payment["id"],
+            "party": inv["customer_name"],
+            "detail": method.upper(),
+            "amount": inv["amount"],
+            "status": "captured",
+        }
+    )
+    status = "captured"
 
     return {
         "success": success,
