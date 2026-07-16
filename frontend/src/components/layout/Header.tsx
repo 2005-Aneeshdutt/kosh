@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 const TITLES: Record<string, { title: string; subtitle: string }> = {
   "/": { title: "Dashboard", subtitle: "Your revenue operations, live" },
   "/collections": { title: "Collections", subtitle: "AI-scored receivables & smart reminders" },
+  "/autopilot": { title: "Autopilot", subtitle: "Autonomous agents with human-in-the-loop approval" },
   "/reconciliation": { title: "Reconciliation", subtitle: "Match settlements to your bank statement" },
   "/forecast": { title: "Cashflow Forecast", subtitle: "7-day outlook with early-warning alerts" },
   "/ledger": { title: "Live Ledger", subtitle: "Real-time transactions · export & Sheets sync" },

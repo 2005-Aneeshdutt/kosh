@@ -11,6 +11,7 @@ import { DashboardPage } from "@/pages/DashboardPage";
 import { CollectionsPage } from "@/pages/CollectionsPage";
 import { ReconciliationPage } from "@/pages/ReconciliationPage";
 import { ForecastPage } from "@/pages/ForecastPage";
+import { AutopilotPage } from "@/pages/AutopilotPage";
 import { LedgerPage } from "@/pages/LedgerPage";
 import { MailPage } from "@/pages/MailPage";
 import { SettingsPage } from "@/pages/SettingsPage";
@@ -37,6 +38,7 @@ function Shell() {
           <Routes>
             <Route path="/" element={<DashboardPage />} />
             <Route path="/collections" element={<CollectionsPage />} />
+            <Route path="/autopilot" element={<AutopilotPage />} />
             <Route path="/reconciliation" element={<ReconciliationPage />} />
             <Route path="/forecast" element={<ForecastPage />} />
             <Route path="/ledger" element={<LedgerPage />} />
