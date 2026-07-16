@@ -151,6 +151,8 @@ export interface EmailSummary {
   meta: Record<string, unknown>;
 }
 export interface LiveEvent { kind: string; ts: string; data: Record<string, any> }
+export interface ChatAction { type: string; url?: string; to?: string; label?: string; invoice_id?: string }
+export interface ChatResponse { reply: string; actions: ChatAction[]; engine: string }
 
 // ── Auth token storage ──────────────────────────────────────
 const TOKEN_KEY = "kosh_token";
@@ -229,6 +231,13 @@ export const api = {
   integrations: () => get<any>("/api/settings/integrations"),
   saveSmtp: (cfg: any) => post<any>("/api/settings/integrations/smtp", cfg),
   saveSheets: (webhook_url: string) => post<any>("/api/settings/integrations/sheets", { webhook_url }),
+  testEmail: (to_email: string) =>
+    post<{ delivered: boolean; delivered_to: string; error?: string; smtp_enabled: boolean }>(
+      "/api/settings/integrations/test-email", { to_email }),
+
+  // copilot chat
+  chat: (messages: { role: string; content: string }[]) =>
+    post<ChatResponse>("/api/chat", { messages }),
 
   // checkout / live
   payInfo: (invoiceId: string) => get<PayInfo>(`/api/pay/${invoiceId}`),
