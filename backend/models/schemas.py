@@ -76,6 +76,8 @@ class SendReminderResponse(BaseModel):
     payment_link_url: Optional[str] = None
     reminders_sent: int
     tone: str
+    email_id: Optional[str] = None
+    email_delivered: bool = False
 
 
 # ── Reconciliation ──────────────────────────────────────────

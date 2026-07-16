@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException
 
-from backend.agents.collect_agent import build_reminder
+from backend.agents.collect_agent import build_reminder, send_reminder_email
 from backend.agents.store import store
 from backend.models.schemas import DebtorRow, SendReminderRequest, SendReminderResponse
 from backend.razorpay_client.client import get_client
@@ -60,10 +60,14 @@ def send_reminder(req: SendReminderRequest) -> SendReminderResponse:
     invoice["reminders_sent"] = invoice.get("reminders_sent", 0) + 1
     invoice["last_reminder_date"] = datetime.now(timezone.utc).isoformat()
 
+    email = send_reminder_email(invoice, message, link["short_url"])
+
     return SendReminderResponse(
         invoice_id=invoice["id"],
         message=message,
         payment_link_url=link["short_url"],
         reminders_sent=invoice["reminders_sent"],
         tone=tone,
+        email_id=email["id"],
+        email_delivered=email["delivered"],
     )

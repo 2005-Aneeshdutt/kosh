@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from backend.agents.bus import emit
 from backend.agents.state import MerchantState
 from backend.razorpay_client.client import get_client
-from backend.services import debtor_scorer, llm
+from backend.services import debtor_scorer, llm, mailer
 
 AGENT = "collect"
 
@@ -73,6 +73,33 @@ def build_reminder(inv: dict, link: str) -> tuple[str, str, bool]:
     return text, tone, used
 
 
+def send_reminder_email(inv: dict, message: str, link: str) -> dict:
+    """Render + dispatch a payment reminder email (real SMTP or outbox)."""
+    tone = _tone_for(inv.get("reminders_sent", 0))
+    accent = {"friendly": "#3B82F6", "firm": "#F59E0B", "urgent": "#EF4444"}[tone]
+    # Turn the plain reminder into HTML paragraphs, dropping the raw link line
+    # (a styled CTA button replaces it).
+    lines = [ln.strip() for ln in message.splitlines() if ln.strip() and "http" not in ln]
+    html = mailer.render_email(
+        kind="reminder",
+        to_name=inv["customer_name"],
+        to_email=inv["customer_email"],
+        subject=f"Payment reminder · Invoice {inv['id']} · {_rupees(inv['amount'])}",
+        body_lines=lines or [message],
+        cta_label=f"Pay {_rupees(inv['amount'])} now",
+        cta_url=link,
+        accent=accent,
+    )
+    return mailer.send(
+        kind="reminder",
+        to_name=inv["customer_name"],
+        to_email=inv["customer_email"],
+        subject=f"Payment reminder · Invoice {inv['id']} · {_rupees(inv['amount'])}",
+        html=html,
+        meta={"invoice_id": inv["id"], "payment_link_url": link, "tone": tone},
+    )
+
+
 async def collect_agent_node(state: MerchantState) -> MerchantState:
     emit(state, AGENT, "thinking", "Scoring outstanding invoices by likelihood-to-pay…")
     await asyncio.sleep(0.4)
@@ -114,6 +141,9 @@ async def collect_agent_node(state: MerchantState) -> MerchantState:
         inv["reminders_sent"] = inv.get("reminders_sent", 0) + 1
         inv["last_reminder_date"] = datetime.now(timezone.utc).isoformat()
 
+        # Dispatch the reminder as a real (or outbox) email with the pay link.
+        email = send_reminder_email(inv, message, link["short_url"])
+
         actions.append(
             {
                 "invoice_id": inv["id"],
@@ -124,16 +154,19 @@ async def collect_agent_node(state: MerchantState) -> MerchantState:
                 "payment_link_url": link["short_url"],
                 "risk_score": inv["risk_score"],
                 "authored_by": "claude" if used_llm else "template",
+                "email_id": email["id"],
+                "email_delivered": email["delivered"],
             }
         )
 
+        delivered = "emailed" if email["delivered"] else "queued in outbox"
         emit(
             state,
             AGENT,
             "action",
-            f"Created payment link and {tone} reminder for {inv['customer_name']} "
-            f"({_rupees(inv['amount'])}).",
-            {"invoice_id": inv["id"], "payment_link_url": link["short_url"]},
+            f"Sent {tone} reminder + payment link to {inv['customer_name']} "
+            f"({_rupees(inv['amount'])}) — {delivered}.",
+            {"invoice_id": inv["id"], "payment_link_url": link["short_url"], "email_id": email["id"]},
         )
         await asyncio.sleep(0.15)
 
