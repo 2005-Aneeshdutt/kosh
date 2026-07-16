@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { Card, Badge, Button, Progress } from "@/components/ui/primitives";
 import { ReminderModal } from "@/components/collections/ReminderModal";
 import { api, type DebtorRow, type ReminderResponse } from "@/lib/api";
 import { formatPaisa, formatDate } from "@/lib/format";
 import { useRun } from "@/context/RunContext";
+import { useLive } from "@/context/LiveContext";
 import { cn } from "@/lib/utils";
 
 const BAND_VARIANT: Record<string, "success" | "warning" | "danger" | "brand"> = {
@@ -24,6 +25,7 @@ const BAND_BAR: Record<string, string> = {
 
 export function CollectionsPage() {
   const { runVersion } = useRun();
+  const { pulse } = useLive();
   const [debtors, setDebtors] = useState<DebtorRow[]>([]);
   const [sending, setSending] = useState<string | null>(null);
   const [modal, setModal] = useState<{ reminder: ReminderResponse; customer: string } | null>(null);
@@ -31,7 +33,7 @@ export function CollectionsPage() {
   const load = () => api.debtors().then(setDebtors).catch(() => {});
   useEffect(() => {
     load();
-  }, [runVersion]);
+  }, [runVersion, pulse]);
 
   async function handleSend(d: DebtorRow) {
     setSending(d.id);
@@ -106,20 +108,18 @@ export function CollectionsPage() {
                     </div>
                   </td>
                   <td className="px-4 py-3.5 text-muted">{d.reminders_sent}</td>
-                  <td className="px-6 py-3.5 text-right">
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => handleSend(d)}
-                      disabled={sending === d.id}
-                    >
-                      {sending === d.id ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Send className="h-3.5 w-3.5" />
-                      )}
-                      Remind
-                    </Button>
+                  <td className="px-6 py-3.5">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button size="sm" variant="secondary" onClick={() => handleSend(d)} disabled={sending === d.id}>
+                        {sending === d.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                        Remind
+                      </Button>
+                      <a href={`/pay/${d.id}`} target="_blank" rel="noreferrer">
+                        <Button size="sm" variant="ghost" title="Open the live payment page a customer would see">
+                          <ExternalLink className="h-3.5 w-3.5" /> Pay link
+                        </Button>
+                      </a>
+                    </div>
                   </td>
                 </tr>
               ))}
