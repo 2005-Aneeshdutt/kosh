@@ -90,13 +90,16 @@ export function ReconciliationPage() {
               <UploadCloud className="mb-3 h-8 w-8 text-muted" />
               <p className="font-semibold text-ink">Drop your bank statement here</p>
               <p className="mt-1 text-sm text-muted">CSV or PDF · we auto-detect columns & UTRs</p>
-              <div className="mt-4 flex gap-2">
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
                 <Button variant="secondary" onClick={() => inputRef.current?.click()}>
                   Browse files
                 </Button>
                 <Button variant="ghost" onClick={useSample}>
-                  <Download className="h-4 w-4" /> Use demo statement
+                  Use demo statement
                 </Button>
+                <a href="/api/reconciliation/sample.csv" download>
+                  <Button variant="ghost"><Download className="h-4 w-4" /> Download sample CSV</Button>
+                </a>
               </div>
               <input
                 ref={inputRef}

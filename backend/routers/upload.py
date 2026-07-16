@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi.responses import PlainTextResponse
 
 from backend.agents.recon_agent import build_summary, reconcile
 from backend.agents.store import store
@@ -68,3 +69,15 @@ def sample_statement() -> dict:
     from backend.razorpay_client import mock_data
 
     return {"filename": "sample_bank_statement.csv", "csv": mock_data.sample_bank_statement_csv()}
+
+
+@router.get("/sample.csv")
+def sample_statement_download() -> PlainTextResponse:
+    """Download the demo bank statement as a real .csv file."""
+    from backend.razorpay_client import mock_data
+
+    return PlainTextResponse(
+        mock_data.sample_bank_statement_csv(),
+        headers={"Content-Disposition": "attachment; filename=kosh_sample_bank_statement.csv"},
+        media_type="text/csv",
+    )
