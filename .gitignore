@@ -12,6 +12,11 @@ seed/mock_dataset.json
 node_modules/
 frontend/dist/
 
+# TypeScript build artifacts
+*.tsbuildinfo
+frontend/vite.config.d.ts
+frontend/vite.config.js
+
 # Editor / OS
 .DS_Store
 .vscode/
