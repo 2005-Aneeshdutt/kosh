@@ -1,0 +1,19 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DEMO_MODE=${DEMO_MODE:-true}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - KOSH_MODEL=${KOSH_MODEL:-claude-sonnet-5}
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:4173
+    volumes:
+      - ./kosh.db:/app/kosh.db
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
