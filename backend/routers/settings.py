@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 from fastapi import APIRouter
+from pydantic import BaseModel
 
 from backend.config import settings
 from backend.models import database
 from backend.models.schemas import RazorpayCredentials, RazorpayStatus
 from backend.razorpay_client.client import get_client, reset_client
+from backend.services import mailer, sheets
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
@@ -38,3 +40,34 @@ def save_razorpay(creds: RazorpayCredentials) -> RazorpayStatus:
         key_secret=creds.key_secret or None,
     )
     return razorpay_status()
+
+
+# ── Integrations: SMTP email + Google Sheets ────────────────
+class SmtpConfig(BaseModel):
+    host: str = ""
+    port: int = 587
+    username: str = ""
+    password: str = ""
+    from_email: str = ""
+    from_name: str = "Artisan Coffee Co."
+
+
+class SheetsConfig(BaseModel):
+    webhook_url: str = ""
+
+
+@router.get("/integrations")
+def integrations_status() -> dict:
+    return {"smtp": mailer.smtp_status(), "sheets": sheets.status()}
+
+
+@router.post("/integrations/smtp")
+def save_smtp(cfg: SmtpConfig) -> dict:
+    mailer.configure_smtp(**cfg.model_dump())
+    return mailer.smtp_status()
+
+
+@router.post("/integrations/sheets")
+def save_sheets(cfg: SheetsConfig) -> dict:
+    sheets.configure(cfg.webhook_url)
+    return sheets.status()
