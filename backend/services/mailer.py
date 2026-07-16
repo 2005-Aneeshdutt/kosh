@@ -28,12 +28,19 @@ _SMTP: dict[str, Any] = {
     "from_email": "",
     "from_name": "Artisan Coffee Co.",
     "enabled": False,
+    # When set, ALL outbound mail is delivered here instead of the customer's
+    # address (handy for demos — every reminder/receipt lands in one real inbox).
+    "redirect_to": "",
 }
 
 
 def configure_smtp(**kwargs: Any) -> None:
     _SMTP.update({k: v for k, v in kwargs.items() if v is not None})
     _SMTP["enabled"] = bool(_SMTP.get("host") and _SMTP.get("username"))
+
+
+def set_redirect(email: str | None) -> None:
+    _SMTP["redirect_to"] = (email or "").strip()
 
 
 def smtp_status() -> dict[str, Any]:
@@ -43,6 +50,7 @@ def smtp_status() -> dict[str, Any]:
         "port": _SMTP["port"],
         "from_email": _SMTP["from_email"],
         "from_name": _SMTP["from_name"],
+        "redirect_to": _SMTP["redirect_to"],
     }
 
 
@@ -105,9 +113,11 @@ def send(
     """Store the email in the outbox and deliver via SMTP if configured."""
     delivered = False
     error: Optional[str] = None
+    # Redirect target wins for actual delivery, so demo emails reach one inbox.
+    deliver_to = _SMTP["redirect_to"] or to_email
     if _SMTP["enabled"]:
         try:
-            _smtp_send(to_email, subject, html)
+            _smtp_send(deliver_to, subject, html)
             delivered = True
         except Exception as exc:  # pragma: no cover - network/credentials
             error = str(exc)
@@ -117,6 +127,7 @@ def send(
         "kind": kind,
         "to_name": to_name,
         "to_email": to_email,
+        "delivered_to": deliver_to,
         "subject": subject,
         "html": html,
         "delivered": delivered,
@@ -143,6 +154,29 @@ def _smtp_send(to_email: str, subject: str, html: str) -> None:
         server.starttls(context=context)
         server.login(_SMTP["username"], _SMTP["password"])
         server.sendmail(_SMTP["from_email"] or _SMTP["username"], [to_email], msg.as_string())
+
+
+def send_test(to_email: str) -> dict[str, Any]:
+    """Send a real test email (or queue it in the outbox if SMTP is off)."""
+    html = render_email(
+        kind="test",
+        to_name="there",
+        to_email=to_email,
+        subject="✅ Kosh email integration is working",
+        body_lines=[
+            "This is a test email from your Kosh dashboard.",
+            "If you're reading this in your inbox, live SMTP delivery is fully "
+            "configured — reminders and payment receipts will be delivered for real.",
+            "You can now let the Collect agent chase receivables over email.",
+        ],
+        cta_label="Open Kosh",
+        cta_url="http://localhost:8000",
+        accent="#3395FF",
+    )
+    return send(
+        kind="test", to_name="there", to_email=to_email,
+        subject="✅ Kosh email integration is working", html=html,
+    )
 
 
 def outbox(limit: int = 50) -> list[dict[str, Any]]:

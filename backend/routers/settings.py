@@ -50,10 +50,15 @@ class SmtpConfig(BaseModel):
     password: str = ""
     from_email: str = ""
     from_name: str = "Artisan Coffee Co."
+    redirect_to: str = ""
 
 
 class SheetsConfig(BaseModel):
     webhook_url: str = ""
+
+
+class TestEmailRequest(BaseModel):
+    to_email: str = "aneeshdutt67@gmail.com"
 
 
 @router.get("/integrations")
@@ -63,7 +68,10 @@ def integrations_status() -> dict:
 
 @router.post("/integrations/smtp")
 def save_smtp(cfg: SmtpConfig) -> dict:
-    mailer.configure_smtp(**cfg.model_dump())
+    payload = cfg.model_dump()
+    redirect = payload.pop("redirect_to", "")
+    mailer.configure_smtp(**payload)
+    mailer.set_redirect(redirect)
     return mailer.smtp_status()
 
 
@@ -71,3 +79,14 @@ def save_smtp(cfg: SmtpConfig) -> dict:
 def save_sheets(cfg: SheetsConfig) -> dict:
     sheets.configure(cfg.webhook_url)
     return sheets.status()
+
+
+@router.post("/integrations/test-email")
+def send_test_email(req: TestEmailRequest) -> dict:
+    rec = mailer.send_test(req.to_email)
+    return {
+        "delivered": rec["delivered"],
+        "delivered_to": rec.get("delivered_to"),
+        "error": rec.get("error"),
+        "smtp_enabled": mailer.smtp_status()["enabled"],
+    }
