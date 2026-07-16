@@ -1,8 +1,9 @@
 """Process-wide store for the latest agent run + uploaded bank statement.
 
-Read endpoints (dashboard, collections, forecast) work whether or not the
-agents have run yet: if there's no run, we compute sensible defaults directly
-from the data + services so the UI is never empty.
+Read endpoints always reflect the LIVE dataset (so streaming payments and
+customer checkouts show up instantly), with the most recent agent run's
+*outputs* (collection actions, anomalies, reconciliation, alerts) overlaid on
+top when available.
 """
 from __future__ import annotations
 
@@ -35,14 +36,7 @@ class Store:
         self.bank_entries = entries
 
     def snapshot(self) -> dict[str, Any]:
-        """Return a coherent view for read endpoints.
-
-        Uses the latest agent run if present; otherwise derives defaults so the
-        dashboard is populated on first load.
-        """
-        if self.latest:
-            return self.latest
-
+        """Coherent view for read endpoints: always-live data + agent outputs."""
         client = get_client()
         invoices = client.fetch_invoices()
         debtor_scorer.score_all(invoices)
@@ -52,10 +46,12 @@ class Store:
         forecast_days, alerts = compute_forecast(settlements, invoices)
         health = compute_health(payments, metrics)
 
+        latest = self.latest or {}
         return {
             "merchant_id": client.merchant_id,
             "merchant_name": client.merchant_name,
             "razorpay_connected": True,
+            # Always-live fields.
             "invoices": invoices,
             "settlements": settlements,
             "recent_payments": payments,
@@ -63,9 +59,12 @@ class Store:
             "cashflow_forecast": forecast_days,
             "cashflow_alerts": alerts,
             "payment_health": health,
-            "anomalies": [],
-            "collection_actions": [],
+            # Overlaid agent outputs (from the last run, if any).
+            "anomalies": latest.get("anomalies", []),
+            "collection_actions": latest.get("collection_actions", []),
+            "payment_insights": latest.get("payment_insights", []),
             "reconciliation_result": self.last_recon or {"ran": False},
+            "last_run": latest.get("last_run"),
         }
 
 

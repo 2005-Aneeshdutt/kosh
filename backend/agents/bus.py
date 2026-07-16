@@ -1,8 +1,13 @@
-"""In-process pub/sub so the SSE endpoint can stream live agent events.
+"""In-process pub/sub for real-time streaming to the browser.
 
-A single EventBus fans out AgentEvent dicts to any number of subscribers
-(each an asyncio.Queue). Agents call ``emit`` inside their nodes; the FastAPI
-SSE endpoint subscribes and forwards to the browser.
+Two channels share one bus:
+
+* **agent events** — the AI crew's thinking/action/result log (the activity feed).
+* **live events**  — business events the whole UI reacts to in real time:
+  new payments, invoices paid, emails sent, metric ticks, agent status.
+
+Agents call :func:`emit`; the payment/mail/simulator layers call
+:func:`publish_live`. FastAPI SSE endpoints subscribe to either channel.
 """
 from __future__ import annotations
 
@@ -14,12 +19,20 @@ from backend.agents.state import AgentEvent, MerchantState
 from backend.models import database
 
 
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
 class EventBus:
     def __init__(self) -> None:
+        # Agent activity channel.
         self._subscribers: set[asyncio.Queue] = set()
-        # Ring buffer of recent events so a late-connecting client can catch up.
         self._recent: list[AgentEvent] = []
+        # Live business-event channel.
+        self._live_subscribers: set[asyncio.Queue] = set()
+        self._recent_live: list[dict[str, Any]] = []
 
+    # ── Agent activity channel ──────────────────────────────
     def subscribe(self) -> asyncio.Queue:
         q: asyncio.Queue = asyncio.Queue()
         self._subscribers.add(q)
@@ -41,6 +54,32 @@ class EventBus:
             except asyncio.QueueFull:  # pragma: no cover
                 pass
 
+    # ── Live business-event channel ─────────────────────────
+    def subscribe_live(self) -> asyncio.Queue:
+        q: asyncio.Queue = asyncio.Queue()
+        self._live_subscribers.add(q)
+        return q
+
+    def unsubscribe_live(self, q: asyncio.Queue) -> None:
+        self._live_subscribers.discard(q)
+
+    def recent_live(self, limit: int = 30) -> list[dict[str, Any]]:
+        return self._recent_live[-limit:]
+
+    def publish_live(self, kind: str, payload: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+        """Broadcast a typed live event, e.g. kind='payment' | 'invoice_paid' |
+        'email' | 'metrics' | 'agent_status'. Returns the envelope."""
+        event = {"kind": kind, "ts": _now(), "data": payload or {}}
+        self._recent_live.append(event)
+        if len(self._recent_live) > 200:
+            self._recent_live = self._recent_live[-200:]
+        for q in list(self._live_subscribers):
+            try:
+                q.put_nowait(event)
+            except asyncio.QueueFull:  # pragma: no cover
+                pass
+        return event
+
 
 bus = EventBus()
 
@@ -55,7 +94,7 @@ def make_event(
         "agent_name": agent_name,
         "event_type": event_type,
         "message": message,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": _now(),
         "metadata": metadata,
     }
 
@@ -67,7 +106,7 @@ def emit(
     message: str,
     metadata: Optional[dict[str, Any]] = None,
 ) -> None:
-    """Record an event to the shared state, the live bus, and the DB log."""
+    """Record an agent event to shared state, the live bus, and the DB log."""
     event = make_event(agent_name, event_type, message, metadata)
     state.setdefault("agent_events", []).append(event)
     bus.publish(event)

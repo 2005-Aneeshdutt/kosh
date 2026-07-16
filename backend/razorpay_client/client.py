@@ -72,7 +72,9 @@ class RazorpayClient:
     # ── Data fetches ────────────────────────────────────────
     def fetch_payments(self) -> list[dict[str, Any]]:
         if self.demo_mode:
-            return mock_data.generate_payments()
+            from backend.services.live_data import live
+
+            return live.get_payments()
         items = self._sdk.payment.all({"count": 100}).get("items", [])
         return [
             {
@@ -88,14 +90,18 @@ class RazorpayClient:
         ]
 
     def fetch_invoices(self) -> list[dict[str, Any]]:
-        # Razorpay's invoice API differs from our internal invoice model, so in
-        # live mode we still lean on the demo invoices as the AR ledger. A real
-        # deployment would source these from the merchant's accounting system.
-        return mock_data.generate_invoices()
+        # Razorpay's invoice API differs from our internal invoice model, so we
+        # source the AR ledger from the live dataset. A real deployment would
+        # read these from the merchant's accounting system.
+        from backend.services.live_data import live
+
+        return live.get_invoices()
 
     def fetch_settlements(self) -> list[dict[str, Any]]:
         if self.demo_mode:
-            return mock_data.generate_settlements()
+            from backend.services.live_data import live
+
+            return live.get_settlements()
         items = self._sdk.settlement.all({"count": 100}).get("items", [])
         return [
             {
@@ -111,10 +117,9 @@ class RazorpayClient:
         ]
 
     def fetch_payment_metrics(self) -> list[dict[str, Any]]:
-        if self.demo_mode:
-            return mock_data.generate_payment_metrics()
-        # Live mode would aggregate from fetch_payments(); demo aggregation is fine here.
-        return mock_data.generate_payment_metrics()
+        from backend.services.live_data import live
+
+        return live.get_metrics()
 
     # ── Actions ─────────────────────────────────────────────
     def create_payment_link(self, invoice: dict[str, Any]) -> dict[str, Any]:
