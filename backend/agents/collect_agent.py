@@ -132,7 +132,6 @@ async def collect_agent_node(state: MerchantState) -> MerchantState:
     )
     await asyncio.sleep(0.3)
 
-    client = get_client()
     actions: list[dict] = []
 
     for inv in prioritized:
@@ -162,7 +161,7 @@ async def collect_agent_node(state: MerchantState) -> MerchantState:
                 "amount": inv["amount"],
                 "tone": tone,
                 "message": message,
-                "payment_link_url": link["short_url"],
+                "payment_link_url": pay_url,
                 "risk_score": inv["risk_score"],
                 "authored_by": "claude" if used_llm else "template",
                 "email_id": email["id"],
@@ -177,7 +176,7 @@ async def collect_agent_node(state: MerchantState) -> MerchantState:
             "action",
             f"Sent {tone} reminder + payment link to {inv['customer_name']} "
             f"({_rupees(inv['amount'])}) — {delivered}.",
-            {"invoice_id": inv["id"], "payment_link_url": link["short_url"], "email_id": email["id"]},
+            {"invoice_id": inv["id"], "payment_link_url": pay_url, "email_id": email["id"]},
         )
         await asyncio.sleep(0.15)
 
