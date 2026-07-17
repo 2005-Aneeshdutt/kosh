@@ -77,10 +77,13 @@ def render_email(
     cta = ""
     if cta_label and cta_url:
         cta = (
-            f'<a href="{cta_url}" style="display:inline-block;background:{accent};'
+            f'<a href="{cta_url}" target="_blank" rel="noopener" '
+            f'style="display:inline-block;background:{accent};'
             'color:#fff;text-decoration:none;font-weight:600;padding:12px 22px;'
             'border-radius:10px;font-size:15px;margin:6px 0 4px;">'
             f"{cta_label}</a>"
+            f'<div style="margin-top:10px;font-size:11px;color:#94a3b8;">'
+            f'Or paste this link: {cta_url}</div>'
         )
     return f"""\
 <div style="background:#f1f5f9;padding:28px 0;font-family:Inter,Arial,sans-serif;">
@@ -95,6 +98,9 @@ def render_email(
       {cta}
     </div>
     <div style="padding:16px 28px;background:#f8fafc;border-top:1px solid #e2e8f0;color:#94a3b8;font-size:12px;">
+      <div style="margin-bottom:6px;">
+        Payments secured by <span style="color:#3395FF;font-weight:700;">Razorpay</span>
+      </div>
       Sent to {to_email} · This is an automated message from your AI collections assistant.
     </div>
   </div>

@@ -84,7 +84,14 @@ export function MailPage() {
         <Card className="flex flex-col overflow-hidden p-0">
           <div className="border-b border-border px-5 py-3.5 text-sm font-semibold text-ink">Preview</div>
           {html ? (
-            <iframe title="email" srcDoc={html} className="min-h-[520px] w-full flex-1 bg-slate-100" sandbox="" />
+            // Our own generated HTML. allow-popups lets the "Pay now" button open
+            // the checkout in a new tab straight from the preview.
+            <iframe
+              title="email"
+              srcDoc={html}
+              className="min-h-[520px] w-full flex-1 bg-slate-100"
+              sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+            />
           ) : (
             <div className="flex flex-1 items-center justify-center p-10 text-sm text-muted">
               Select an email to preview.
