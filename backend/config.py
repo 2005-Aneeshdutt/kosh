@@ -47,6 +47,9 @@ class Settings:
         # Deliver every demo email here regardless of the customer's address.
         self.mail_redirect: str = os.getenv("KOSH_MAIL_REDIRECT", "")
 
+        # Google Apps Script Web App URL for live ledger sync (optional).
+        self.sheets_webhook: str = os.getenv("KOSH_SHEETS_WEBHOOK", "")
+
         origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
         self.cors_origins: list[str] = [o.strip() for o in origins.split(",") if o.strip()]
 

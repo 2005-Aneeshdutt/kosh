@@ -142,7 +142,8 @@ def push_full() -> dict[str, Any]:
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        urllib.request.urlopen(req, timeout=15).read()
+        # Apps Script cold-starts and bulk writes can take a while.
+        urllib.request.urlopen(req, timeout=90).read()
         bus.publish_live("sheet_sync", {"ok": True, "count": len(rows)})
         return {"pushed": len(rows)}
     except Exception as exc:  # pragma: no cover

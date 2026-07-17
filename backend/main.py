@@ -70,6 +70,12 @@ async def _startup() -> None:
     if settings.mail_redirect:
         mailer.set_redirect(settings.mail_redirect)
 
+    # Live Google Sheets ledger sync, if a webhook is configured.
+    from backend.services import sheets
+
+    if settings.sheets_webhook:
+        sheets.configure(settings.sheets_webhook)
+
     # Seed the Autopilot approval queue with an initial scan (loop stays off
     # until the user enables Autopilot).
     from backend.services import autopilot
