@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import uuid
 
 from fastapi import APIRouter
@@ -11,6 +12,8 @@ from backend.agents import orchestrator
 from backend.agents.bus import bus
 from backend.agents.store import store
 from backend.models.schemas import AgentStatus, RunAgentsResponse
+
+logger = logging.getLogger("kosh.agents")
 
 router = APIRouter(prefix="/api/agents", tags=["agents"])
 
@@ -34,7 +37,9 @@ async def _execute_run() -> None:
         store.set_run(final)
         for k in store.status:
             store.status[k] = "done"
-    except Exception:  # pragma: no cover
+    except Exception:
+        # Never swallow a failed run silently — it hides real bugs.
+        logger.exception("Agent pipeline failed")
         for k in store.status:
             store.status[k] = "error"
     finally:
