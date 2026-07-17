@@ -51,16 +51,63 @@ Kosh behaves like a real SaaS you sign into and operate:
 - **Always-alive data.** A background **payment simulator** streams realistic
   transactions so the dashboard is never static (toggle it from the header).
 
-### The 30-second "wow" demo
+---
+
+## Autopilot — autonomy *with* guardrails
+
+The hard part of agentic AI isn't taking actions; it's knowing which actions a
+machine may take alone. Kosh's **Autopilot** makes that explicit:
+
+1. **Agents propose, they don't blindly act.** Every open invoice produces a typed
+   proposal — `reminder`, `escalate`, `discount_offer`, or `collect` — each with an
+   AI-written **rationale**, a risk band, and a confidence score.
+2. **A policy engine decides the path.** Low-value, low-risk reminders
+   **auto-execute**. Anything above the amount/risk thresholds — plus *every*
+   discount offer and direct collection — is routed to a human.
+3. **A human approves the rest.** The **approval queue** shows each proposal with
+   its reasoning; Approve runs it for real (sends the email, creates the pay link,
+   collects the payment), Reject discards it.
+4. **A scheduler runs it autonomously** when engaged, so collections keep moving
+   without anyone clicking.
+
+Thresholds are tunable at runtime (`POST /api/autopilot/policy`). This is the
+pattern a payments company actually needs: autonomy where it's safe, a human
+where it matters.
+
+---
+
+## Kosh Copilot — a chatbot that *does* things
+
+A floating assistant on every page that answers from live data **and takes real
+actions** (Claude tool-calling when an API key is set; a capable rule-based
+router offline):
+
+| You say | It does |
+|---|---|
+| *"How are we doing?"* | Live revenue, success rate, outstanding, biggest overdue |
+| *"Who's overdue?"* | Ranked chase list by risk |
+| *"Remind Bangalore Brew House"* | Sends the reminder email + pay link |
+| *"Pay INV-1020"* | **Actually captures the payment** — dashboard updates live |
+| *"Give me a pay link for INV-1024"* | Returns an **Open checkout** button |
+| *"Run the agents"* | Launches the four-agent crew |
+
+---
+
+## The 60-second demo script
 
 1. **Sign in** (one click).
-2. Click **Run All Agents** — watch the four agents work the feed; 6 reminder
-   emails appear in the **Outbox**.
-3. Go to **Collections**, click **Pay link** on an overdue invoice → the
-   Razorpay-style checkout opens in a new tab.
-4. Pay with `4111 1111 1111 1111`. Flip back to the **Dashboard** — revenue ticks
-   up live, the invoice is gone from Collections, the **Ledger** has a new row,
-   and the receipt is in the **Outbox**.
+2. **Run All Agents** — watch the crew work the live feed; reminder emails land in
+   the **Outbox**.
+3. **Autopilot** → **Engage** — see proposals appear, some auto-executed within
+   policy, the rest waiting for you. **Approve** one and watch it fire.
+4. **Reconciliation** → **Use demo statement** (or drop
+   `seed/sample_bank_statement.csv`) → Recon matches **88.5%** and explains the
+   gaps in plain English.
+5. **Collections** → **Pay link** on an overdue invoice → the Razorpay-style
+   checkout opens. Pay with `4111 1111 1111 1111`.
+6. Flip to the **Dashboard** — revenue animates up, the invoice is gone from
+   Collections, the **Ledger** has a new row, the receipt is in the **Outbox**.
+7. Ask the **Copilot**: *"who's overdue?"* → *"pay INV-1021"* → watch it collect.
 
 ---
 
@@ -153,6 +200,67 @@ docker compose up --build         # app on :5173, API on :8000
 | `ANTHROPIC_API_KEY` | — | Enables live Claude agent copy (optional). |
 | `KOSH_MODEL` | `claude-sonnet-5` | Model used by all agents. |
 | `CORS_ORIGINS` | `localhost:5173` | Allowed frontend origins. |
+| `KOSH_PUBLIC_URL` | `http://localhost:8000` | Base URL used for pay links inside emails. |
+| `KOSH_SMTP_*` | — | Real email delivery (see below). |
+| `KOSH_MAIL_REDIRECT` | — | Deliver every demo email to one inbox. |
+
+---
+
+## Turning on real email (Gmail, ~2 minutes)
+
+Reminders and receipts always appear in the in-app **Outbox**. To have them
+actually delivered:
+
+1. Create a **dedicated Gmail** for Kosh (e.g. `kosh.revops@gmail.com`).
+2. Enable **2-Step Verification** → https://myaccount.google.com/security
+   *(the App Password option does not appear until this is on).*
+3. Create an **App Password** → https://myaccount.google.com/apppasswords
+   → app **Mail**, device **Other → "Kosh"**. Google returns a 16-character code.
+4. Put it in **Settings → Email** (click *Use Gmail preset*), or in `.env`:
+
+```bash
+KOSH_SMTP_HOST=smtp.gmail.com
+KOSH_SMTP_PORT=587
+KOSH_SMTP_USER=kosh.revops@gmail.com
+KOSH_SMTP_PASSWORD=your16charapppassword   # App Password, NOT your login password
+KOSH_SMTP_FROM=kosh.revops@gmail.com
+KOSH_MAIL_REDIRECT=you@example.com         # every demo email lands here
+```
+
+5. Hit **Send test email**. Then **Collections → Remind** delivers a real email
+   whose **Pay now** button opens the live checkout.
+
+> Your normal Gmail password will be rejected (`535 Username and Password not
+> accepted`) — Google requires an App Password for SMTP.
+
+---
+
+## Production hardening & Razorpay integration roadmap
+
+Kosh is a working showcase, and these are the deliberate lines between *demo* and
+*production* — documented rather than hidden:
+
+| Area | Today (demo) | Production path |
+|---|---|---|
+| **Checkout** | High-fidelity Razorpay-style checkout, simulated authorisation with predictable test cards. | Drop in **Razorpay Checkout.js** + Orders API; reconcile via **webhooks with signature verification**. The client already isolates this behind `razorpay_client/`. |
+| **Card data / PCI** | The demo form accepts card fields to make the flow tangible. | **Never touch PAN.** Razorpay Checkout tokenises client-side; the server only ever sees a token/`payment_id`. No PCI scope. |
+| **Payment integrity** | Atomic in-process invoice claim prevents double-capture (stress-tested: 12 concurrent payments → exactly 1 capture). | **Idempotency keys** per payment attempt + DB constraints for exactly-once across replicas. |
+| **State & scale** | Single-process in-memory live dataset (correct for a single-node demo). | Postgres + **Redis** for shared state, multiple uvicorn workers, a queue for agent runs. |
+| **Agent safety** | Policy engine + human-in-the-loop approvals for risky actions. | Add full **audit log**, per-action RBAC, and rollback. |
+| **LLM** | Claude tool-calling with a deterministic offline fallback. | **Prompt-injection defence**, PII redaction before prompts, response schemas, evals + cost/latency tracing. |
+| **Auth** | Token sessions, in-memory. | Real JWT + refresh, multi-tenant, OAuth onboarding to connect a merchant's Razorpay account. |
+| **Outreach** | Email (SMTP). | **WhatsApp/SMS** (the channel Indian SMBs actually read) with an escalation ladder. |
+| **Ecosystem** | Uses the Razorpay SDK directly. | Expose Kosh's tools as an **MCP server** so Razorpay **Agent Studio** / Claude Desktop can call them. |
+
+### Where Kosh maps onto Razorpay's product surface
+
+| Kosh module | Razorpay product it complements |
+|---|---|
+| Collections / pay links | Payment Links, Smart Collect, subscription dunning |
+| Recon | Settlement reports, RazorpayX reconciliation |
+| Oracle (cashflow) | RazorpayX, **Razorpay Capital** (working-capital offers) |
+| Pulse (payment health) | Payment analytics, Optimizer / Smart Retry |
+| Autopilot | **Razorpay Agent Studio** (Claude Agent SDK) |
 
 ---
 
@@ -173,6 +281,21 @@ docker compose up --build         # app on :5173, API on :8000
 | GET | `/api/reconciliation/results` | Latest reconciliation result |
 | GET | `/api/forecast/cashflow` | 7-day forecast + alerts |
 | GET/POST | `/api/settings/razorpay[/status]` | Manage credentials + demo mode |
+| POST | `/api/auth/login` · `/logout` · GET `/me` | Session auth |
+| GET | `/api/stream` | **SSE** stream of live business events |
+| GET | `/api/pay/{invoice_id}` | Public checkout data |
+| POST | `/api/checkout/order` · `/checkout/pay` | Create order · take payment |
+| POST | `/api/chat` | Kosh Copilot (answers + actions) |
+| GET/POST | `/api/autopilot/status` · `/start` · `/stop` · `/scan` | Autopilot control |
+| GET | `/api/autopilot/proposals` | Proposal queue |
+| POST | `/api/autopilot/proposals/{id}/approve` · `/reject` | Human-in-the-loop |
+| POST | `/api/autopilot/policy` | Tune auto-approve thresholds |
+| GET | `/api/ledger` · `/ledger/export.csv` | Live ledger · CSV export |
+| POST | `/api/ledger/sync` | Push ledger to Google Sheets |
+| GET | `/api/mail/outbox` · `/mail/{id}` | Email outbox + rendered HTML |
+| POST | `/api/settings/integrations/smtp` · `/sheets` · `/test-email` | Integrations |
+| POST | `/api/simulator/start` · `/stop` · `/tick` | Live payment simulator |
+| GET | `/api/reconciliation/sample.csv` | Download the demo bank statement |
 
 ---
 
@@ -180,21 +303,32 @@ docker compose up --build         # app on :5173, API on :8000
 
 ```
 backend/
-  main.py                 FastAPI app + CORS + routers
+  main.py                 FastAPI app + CORS + routers + SPA serving
   config.py               env-backed settings
   razorpay_client/        SDK wrapper (client.py) + rich mock_data.py
   agents/                 state, bus (SSE), 4 agents, orchestrator, store
-  services/               llm, debtor_scorer, anomaly_detector, invoice_parser
+  services/
+    live_data.py          mutable live dataset (single source of truth)
+    payments.py           checkout processing, test cards, receipts
+    autopilot.py          proposals, policy engine, approvals, scheduler
+    copilot.py            conversational assistant + action tools
+    mailer.py             HTML emails, outbox, SMTP delivery
+    sheets.py             ledger + CSV + Google Sheets sync
+    auth.py  simulator.py  llm.py  debtor_scorer.py
+    anomaly_detector.py   invoice_parser.py
   models/                 schemas (Pydantic) + database (SQLite)
-  routers/                dashboard, agents, collections, upload, forecast, settings
+  routers/                auth, dashboard, agents, collections, upload,
+                          forecast, settings, live, chat, autopilot
 frontend/
   src/
-    components/           layout, agents (feed/cards), dashboard, collections, ui
-    pages/                Dashboard, Collections, Reconciliation, Forecast, Settings
-    context/RunContext    shared run state + SSE fan-out
-    hooks/useAgentStream  live event subscription
+    components/           layout, agents, dashboard, collections, chat, ui
+    pages/                Login, Checkout, Dashboard, Collections, Autopilot,
+                          Reconciliation, Forecast, Ledger, Mail, Settings
+    context/              AuthContext, LiveContext (SSE), RunContext
     lib/                  api client, formatting helpers
-seed/                     mock dataset + sample_bank_statement.csv generator
+seed/
+  generate_mock_data.py     regenerate the dataset
+  sample_bank_statement.csv ← upload this on the Reconciliation page
 ```
 
 ---
