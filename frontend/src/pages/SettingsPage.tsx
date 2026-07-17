@@ -8,9 +8,13 @@ import { cn } from "@/lib/utils";
 const APPS_SCRIPT = `function doPost(e) {
   var sheet = SpreadsheetApp.getActiveSheet();
   var body = JSON.parse(e.postData.contents);
-  if (body.replace) { sheet.clearContents(); sheet.appendRow(body.header);
-    body.rows.forEach(function(r){ sheet.appendRow(r); }); }
-  else if (body.row) { sheet.appendRow(body.row); }
+  if (body.replace) {
+    sheet.clearContents();
+    var all = [body.header].concat(body.rows);          // bulk write = fast
+    sheet.getRange(1, 1, all.length, body.header.length).setValues(all);
+  } else if (body.row) {
+    sheet.appendRow(body.row);                          // single live row
+  }
   return ContentService.createTextOutput("ok");
 }`;
 
