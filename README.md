@@ -4,8 +4,7 @@
 > Collections happen automatically, settlements reconcile in seconds, cashflow is
 > predicted daily, and payment anomalies are caught before they cost you money.
 
-Kosh is an AI Revenue-Operations Copilot built for the **Razorpay AI Builders**
-program. It deploys a crew of four specialized agents — orchestrated with
+Kosh is an AI Revenue-Operations Copilot  that  deploys a crew of four specialized agents — orchestrated with
 **LangGraph** over a shared merchant state and reasoning with **Claude
 (Sonnet 5)** — all visible through a single real-time dashboard.
 
