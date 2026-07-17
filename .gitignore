@@ -20,3 +20,6 @@ frontend/vite.config.js
 # Editor / OS
 .DS_Store
 .vscode/
+
+# Private notes — never publish
+DEMO.md
