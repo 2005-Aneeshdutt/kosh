@@ -6,12 +6,15 @@ the Outbox (always visible in the UI). If SMTP credentials are configured
 """
 from __future__ import annotations
 
+import html as html_lib
+import re
 import smtplib
 import ssl
 import uuid
 from datetime import datetime, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.utils import formatdate, make_msgid
 from typing import Any, Optional
 
 from backend.agents.bus import bus
@@ -148,18 +151,35 @@ def send(
     return record
 
 
+def _html_to_text(html: str) -> str:
+    """Crude but effective plain-text rendering of our own email HTML."""
+    text = re.sub(r"(?i)<br\s*/?>", "\n", html)
+    text = re.sub(r"(?i)</(p|div|tr|h[1-6]|a)>", "\n", text)
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = html_lib.unescape(text)
+    lines = [re.sub(r"[ \t]+", " ", ln).strip() for ln in text.splitlines()]
+    return "\n".join(ln for ln in lines if ln)
+
+
 def _smtp_send(to_email: str, subject: str, html: str) -> None:
+    sender = _SMTP["from_email"] or _SMTP["username"]
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
-    msg["From"] = f'{_SMTP["from_name"]} <{_SMTP["from_email"] or _SMTP["username"]}>'
+    msg["From"] = f'{_SMTP["from_name"]} <{sender}>'
     msg["To"] = to_email
-    msg.attach(MIMEText(html, "html"))
+    msg["Reply-To"] = sender
+    # Proper Date/Message-ID and a plain-text alternative materially improve
+    # deliverability — HTML-only mail is a strong spam signal.
+    msg["Date"] = formatdate(localtime=True)
+    msg["Message-ID"] = make_msgid(domain=sender.split("@")[-1])
+    msg.attach(MIMEText(_html_to_text(html), "plain", "utf-8"))
+    msg.attach(MIMEText(html, "html", "utf-8"))
 
     context = ssl.create_default_context()
     with smtplib.SMTP(_SMTP["host"], int(_SMTP["port"]), timeout=15) as server:
         server.starttls(context=context)
         server.login(_SMTP["username"], _SMTP["password"])
-        server.sendmail(_SMTP["from_email"] or _SMTP["username"], [to_email], msg.as_string())
+        server.sendmail(sender, [to_email], msg.as_string())
 
 
 def send_test(to_email: str) -> dict[str, Any]:
