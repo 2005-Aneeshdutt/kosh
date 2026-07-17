@@ -56,17 +56,8 @@ async def _startup() -> None:
 
     simulator.start()
 
-    # Seed the Autopilot approval queue with an initial scan (loop stays off
-    # until the user enables Autopilot).
-    from backend.services import autopilot
-
-    try:
-        autopilot.scan()
-    except Exception:  # pragma: no cover
-        pass
-
-    # Apply SMTP config from .env if provided (Gmail etc.) so real email
-    # delivery works out of the box without touching the Settings UI.
+    # Apply SMTP config from .env FIRST, so anything the agents send during
+    # startup is delivered rather than silently queued.
     from backend.services import mailer
 
     if settings.smtp_host and settings.smtp_user:
@@ -78,6 +69,15 @@ async def _startup() -> None:
         )
     if settings.mail_redirect:
         mailer.set_redirect(settings.mail_redirect)
+
+    # Seed the Autopilot approval queue with an initial scan (loop stays off
+    # until the user enables Autopilot).
+    from backend.services import autopilot
+
+    try:
+        autopilot.scan()
+    except Exception:  # pragma: no cover
+        pass
 
 
 @app.get("/api/health")
