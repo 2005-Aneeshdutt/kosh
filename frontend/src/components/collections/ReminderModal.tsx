@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { X, Copy, Link2, Sparkles } from "lucide-react";
+import { X, Copy, Link2, Sparkles, CheckCircle2, Inbox, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { Button, Badge } from "@/components/ui/primitives";
 import type { ReminderResponse } from "@/lib/api";
@@ -30,7 +30,9 @@ export function ReminderModal({
           <div>
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-brand" />
-              <h3 className="text-lg font-bold text-ink">Reminder ready</h3>
+              <h3 className="text-lg font-bold text-ink">
+                {reminder.email_delivered ? "Reminder sent" : "Reminder queued"}
+              </h3>
             </div>
             <p className="mt-0.5 text-sm text-muted">
               To {customer} · reminder #{reminder.reminders_sent}
@@ -67,18 +69,43 @@ export function ReminderModal({
           </div>
         )}
 
+        {/* Honest delivery status — the email is dispatched the moment you hit
+            "Remind", so this reports what actually happened. */}
+        <div
+          className={
+            "mt-4 flex items-start gap-2 rounded-xl px-3 py-2.5 text-sm " +
+            (reminder.email_delivered
+              ? "bg-emerald-50 text-emerald-700"
+              : "bg-amber-50 text-amber-700")
+          }
+        >
+          {reminder.email_delivered ? (
+            <>
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>
+                <b>Delivered.</b> This email has been sent for real — check the inbox.
+              </span>
+            </>
+          ) : (
+            <>
+              <Inbox className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>
+                <b>Queued in the Outbox.</b> Add SMTP credentials under
+                Settings&nbsp;→&nbsp;Email to deliver reminders for real.
+              </span>
+            </>
+          )}
+        </div>
+
         <div className="mt-5 flex justify-end gap-2">
-          <Button variant="secondary" onClick={onClose}>
-            Close
-          </Button>
-          <Button
-            onClick={() => {
-              toast.success(`Reminder sent to ${customer} via SMS + email`);
-              onClose();
-            }}
-          >
-            Send now
-          </Button>
+          {reminder.payment_link_url && (
+            <a href={reminder.payment_link_url} target="_blank" rel="noreferrer">
+              <Button variant="secondary">
+                <ExternalLink className="h-4 w-4" /> Open pay page
+              </Button>
+            </a>
+          )}
+          <Button onClick={onClose}>Done</Button>
         </div>
       </motion.div>
     </div>
