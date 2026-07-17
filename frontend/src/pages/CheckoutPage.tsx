@@ -96,6 +96,14 @@ export function CheckoutPage() {
         animate={{ opacity: 1, y: 0, scale: 1 }}
         className="w-full max-w-[400px] overflow-hidden rounded-2xl bg-white shadow-pop"
       >
+        {/* Razorpay bar */}
+        <div className="flex items-center justify-between bg-[#0C2451] px-5 py-2">
+          <RazorpayMark />
+          <span className="flex items-center gap-1 text-[10px] font-medium text-slate-300">
+            <Lock className="h-2.5 w-2.5" /> Secure payment
+          </span>
+        </div>
+
         {/* Header */}
         <div className="bg-navy-900 px-5 py-4 text-white">
           <div className="flex items-center justify-between">
@@ -194,8 +202,34 @@ export function CheckoutPage() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        <PoweredByRazorpay />
       </motion.div>
     </Centered>
+  );
+}
+
+/** Razorpay wordmark — this checkout runs on the Razorpay ecosystem. */
+function RazorpayMark({ dark = false }: { dark?: boolean }) {
+  return (
+    <span className="flex items-center gap-1.5">
+      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" aria-hidden>
+        <path d="M12.7 2 8.9 16.1l-2.5 5.9H2.6L9 2h3.7z" fill="#3395FF" />
+        <path d="M21.4 6.6 17 22h-3.8l2.6-9.7-5.2 3.2 1.5-5.6 9.3-3.3z" fill="#3395FF" />
+      </svg>
+      <span className={cn("text-[11px] font-bold tracking-tight", dark ? "text-ink" : "text-white")}>
+        Razorpay
+      </span>
+    </span>
+  );
+}
+
+function PoweredByRazorpay() {
+  return (
+    <div className="flex items-center justify-center gap-1.5 border-t border-border bg-slate-50 py-2.5">
+      <span className="text-[10px] text-muted">Powered by</span>
+      <RazorpayMark dark />
+    </div>
   );
 }
 
