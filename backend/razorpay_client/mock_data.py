@@ -13,6 +13,7 @@ identical on every run.
 """
 from __future__ import annotations
 
+import os
 import random
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -20,6 +21,13 @@ from typing import Any
 SEED = 20260716
 MERCHANT_ID = "acc_ArtisanCoffeeCo"
 MERCHANT_NAME = "Artisan Coffee Co."
+
+# A real, reachable debtor used for live email demos. Hitting "Remind" on this
+# invoice delivers an actual email (with a working pay link) to this address
+# once SMTP is configured. Override with KOSH_DEMO_EMAIL.
+DEMO_CUSTOMER_NAME = os.getenv("KOSH_DEMO_CUSTOMER", "Aneesh Dutt")
+DEMO_CUSTOMER_EMAIL = os.getenv("KOSH_DEMO_EMAIL", "aneeshdutt67@gmail.com")
+DEMO_INVOICE_ID = "INV-2001"
 
 _FIRST_NAMES = [
     "Priya", "Rahul", "Ankit", "Sneha", "Vikram", "Meera", "Arjun", "Kavitha",
@@ -169,6 +177,27 @@ def generate_invoices() -> list[dict[str, Any]]:
                 "risk_score": 0.0,
             }
         )
+
+    # A real, reachable customer so live email demos actually land in an inbox:
+    # hit "Remind" on this invoice and the reminder (with a working pay link)
+    # is delivered to this address once SMTP is configured.
+    invoices.append(
+        {
+            "id": DEMO_INVOICE_ID,
+            "customer_name": DEMO_CUSTOMER_NAME,
+            "customer_email": DEMO_CUSTOMER_EMAIL,
+            "customer_phone": "+919845000199",
+            "amount": 8500000,  # ₹85,000
+            "due_date": _iso(now - timedelta(days=28)),
+            "status": "overdue",
+            "days_overdue": 28,
+            "payment_link_id": None,
+            "payment_link_url": None,
+            "reminders_sent": 1,
+            "last_reminder_date": _iso(now - timedelta(days=6)),
+            "risk_score": 0.0,
+        }
+    )
 
     return invoices
 
