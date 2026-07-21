@@ -1,18 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { MessageSquare, X, Send, Sparkles, ExternalLink, ArrowRight, Loader2, Bot } from "lucide-react";
-import { api, type ChatAction } from "@/lib/api";
+import { MessageSquare, X, Send, Sparkles, ExternalLink, ArrowRight, Loader2, Bot, FileText } from "lucide-react";
+import { api, type ChatAction, type ChatCitation } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
-interface Msg { role: "user" | "assistant"; content: string; actions?: ChatAction[] }
+interface Msg { role: "user" | "assistant"; content: string; actions?: ChatAction[]; citations?: ChatCitation[] }
 
 const SUGGESTIONS = [
   "How are we doing?",
   "Who's overdue?",
+  "How much did Cardamom & Co. pay?",
   "Pay the biggest overdue invoice",
   "Run the agents",
-  "Email a test to aneeshdutt67@gmail.com",
 ];
 
 const GREETING: Msg = {
@@ -45,7 +45,7 @@ export function ChatWidget() {
       const res = await api.chat(
         history.filter((m) => m.role === "user" || m.role === "assistant").map((m) => ({ role: m.role, content: m.content }))
       );
-      setMsgs((m) => [...m, { role: "assistant", content: res.reply, actions: res.actions }]);
+      setMsgs((m) => [...m, { role: "assistant", content: res.reply, actions: res.actions, citations: res.citations }]);
     } catch {
       setMsgs((m) => [...m, { role: "assistant", content: "Sorry — I couldn't reach the backend just now." }]);
     } finally {
@@ -123,6 +123,21 @@ export function ChatWidget() {
                             {a.label}
                           </button>
                         ))}
+                      </div>
+                    )}
+                    {m.citations && m.citations.length > 0 && (
+                      <div className="mt-2">
+                        <div className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                          <FileText className="h-3 w-3" /> Sources
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {m.citations.map((c, j) => (
+                            <span key={j} className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-[11px] text-slate-600" title={c.label}>
+                              <span className="font-mono font-semibold text-slate-500">{c.ref}</span>
+                              <span className="max-w-[120px] truncate">{c.label}</span>
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>

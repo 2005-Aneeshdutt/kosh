@@ -152,7 +152,8 @@ export interface EmailSummary {
 }
 export interface LiveEvent { kind: string; ts: string; data: Record<string, any> }
 export interface ChatAction { type: string; url?: string; to?: string; label?: string; invoice_id?: string }
-export interface ChatResponse { reply: string; actions: ChatAction[]; engine: string }
+export interface ChatCitation { kind: string; ref: string; label: string; date: string }
+export interface ChatResponse { reply: string; actions: ChatAction[]; citations?: ChatCitation[]; engine: string }
 
 // ── Auth token storage ──────────────────────────────────────
 const TOKEN_KEY = "kosh_token";
