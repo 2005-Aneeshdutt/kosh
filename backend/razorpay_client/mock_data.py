@@ -127,16 +127,21 @@ def generate_invoices() -> list[dict[str, Any]]:
     now = _now()
     invoices: list[dict[str, Any]] = []
 
-    # 20 paid, 6 overdue, 4 pending (not yet due) = 30 total.
+    # 18 paid, 10 overdue (a realistic spread incl. deeply-overdue high/critical
+    # risk accounts), 4 pending (not yet due).
     plan = (
-        [("paid", None)] * 20
-        + [("overdue", d) for d in (3, 8, 14, 22, 35, 45)]
+        [("paid", None)] * 18
+        + [("overdue", d) for d in (3, 8, 14, 22, 35, 48, 63, 79, 96, 118)]
         + [("pending", d) for d in (-4, -7, -11, -15)]  # negative == due in future
     )
 
     for i, (status, offset) in enumerate(plan):
         customer = _WHOLESALE_CUSTOMERS[i % len(_WHOLESALE_CUSTOMERS)]
-        amount = rng.choice([1500000, 3500000, 5000000, 7500000, 12000000, 18000000, 25000000])
+        # Deeper-overdue accounts carry larger balances → higher risk weight.
+        if status == "overdue" and offset >= 60:
+            amount = rng.choice([12000000, 18000000, 25000000, 30000000])
+        else:
+            amount = rng.choice([1500000, 3500000, 5000000, 7500000, 12000000, 18000000])
 
         if status == "overdue":
             days_overdue = offset
@@ -151,8 +156,8 @@ def generate_invoices() -> list[dict[str, Any]]:
             due = now - timedelta(days=rng.randint(20, 60))
             reminders = 0
 
-        # The headline problem invoice.
-        if i == 20:  # first overdue -> Bangalore Brew House, big and 3 days over.
+        # The headline problem invoice (first overdue -> Bangalore Brew House).
+        if i == 18:
             customer = _WHOLESALE_CUSTOMERS[0]
             amount = 12000000  # ₹1,20,000
 
