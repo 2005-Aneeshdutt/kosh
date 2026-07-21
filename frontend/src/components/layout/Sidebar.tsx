@@ -18,10 +18,10 @@ const NAV = [
 ];
 
 const AGENTS = [
-  { name: "Collect", color: "bg-collect", desc: "Chases receivables" },
-  { name: "Recon", color: "bg-recon", desc: "Matches settlements" },
-  { name: "Oracle", color: "bg-oracle", desc: "Forecasts cashflow" },
-  { name: "Pulse", color: "bg-pulse", desc: "Monitors payments" },
+  { key: "collect", name: "Collect", color: "bg-collect", desc: "Chases receivables" },
+  { key: "recon", name: "Recon", color: "bg-recon", desc: "Matches settlements" },
+  { key: "oracle", name: "Oracle", color: "bg-oracle", desc: "Forecasts cashflow" },
+  { key: "pulse", name: "Pulse", color: "bg-pulse", desc: "Monitors payments" },
 ];
 
 export function Sidebar() {
@@ -67,18 +67,22 @@ export function Sidebar() {
       </nav>
 
       <div className="mt-7 px-6">
-        <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-          <Bot className="h-3.5 w-3.5" /> Agent Crew
-        </div>
-        <div className="space-y-3">
+        <NavLink to="/agents" className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500 transition-colors hover:text-brand">
+          <Bot className="h-3.5 w-3.5" /> Agent Crew <span className="ml-auto text-[9px] font-normal normal-case text-slate-600">see how →</span>
+        </NavLink>
+        <div className="space-y-1">
           {AGENTS.map((a) => (
-            <div key={a.name} className="flex items-start gap-2.5">
+            <NavLink
+              key={a.name}
+              to={`/agents?a=${a.key}`}
+              className="group -mx-2 flex items-start gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-white/5"
+            >
               <span className={cn("mt-1 h-2 w-2 shrink-0 rounded-full", a.color)} />
               <div>
-                <div className="text-[13px] font-semibold text-slate-200">{a.name}</div>
+                <div className="text-[13px] font-semibold text-slate-200 group-hover:text-white">{a.name}</div>
                 <div className="text-[11px] text-slate-500">{a.desc}</div>
               </div>
-            </div>
+            </NavLink>
           ))}
         </div>
       </div>
