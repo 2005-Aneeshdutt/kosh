@@ -15,12 +15,73 @@ import re
 from typing import Any, Optional
 
 from backend.config import settings
-from backend.services import mailer
+from backend.services import knowledge, llm, mailer
 from backend.services.live_data import live
 
 
 def _rupees(paisa: int) -> str:
     return f"₹{paisa / 100:,.0f}"
+
+
+# ── RAG: "Ask your books" ───────────────────────────────────
+def is_books_question(text: str) -> bool:
+    """Detect data-lookup questions (as opposed to action commands)."""
+    t = text.lower()
+    if any(w in t for w in ["remind", "pay ", "collect", "chase", "nudge", "run the",
+                            "run agents", "engage", "test email", "scan", "pay link", "send link"]):
+        return False
+    signals = ["how much", "total", "sum ", "when did", "when was", "history", "spent",
+               "average", "breakdown", "paid to", "paid by", "paid this", "paid in",
+               "received from", "how many payment", "list payment", "show payment",
+               "biggest payment", "last payment"]
+    if any(s in t for s in signals):
+        return True
+    if any(m in t for m in knowledge._MONTHS) and any(q in t for q in ["how", "what", "total", "paid", "revenue", "much"]):
+        return True
+    return False
+
+
+def answer_from_books(query: str) -> tuple[str, list, list]:
+    """Retrieval-grounded answer over the merchant's own records (+citations)."""
+    docs = knowledge.retrieve(query, k=6)
+    if not docs:
+        return "I couldn't find anything matching that in your books.", [], []
+
+    agg = knowledge.aggregate(query, docs)
+    citations = [
+        {"kind": d["kind"], "ref": d["ref"], "label": d["label"], "date": d["date"]}
+        for d in docs[:5]
+    ]
+    context = "\n".join(f"[{d['kind']} {d['ref']}] {d['text']}" for d in docs)
+    prompt = (
+        "You are answering an Indian merchant's question using ONLY the records below. "
+        "Be specific with amounts and cite record ids in square brackets. If the records "
+        "don't contain the answer, say so.\n"
+        f"Question: {query}\n\nRecords:\n{context}\n\nAnswer in 1-3 sentences."
+    )
+
+    def _fallback() -> str:
+        parts: list[str] = []
+        if agg:
+            when = _month_name(agg.get("month"))
+            parts.append(
+                f"Found {agg['count']} matching record(s){when} totalling {_rupees(agg['total'])}."
+            )
+        top = docs[0]
+        parts.append(f"Top match: {top['label']} [{top['ref']}].")
+        return " ".join(parts)
+
+    reply, _ = llm.generate(prompt, max_tokens=220, fallback=_fallback)
+    return reply, [], citations
+
+
+def _month_name(m: int | None) -> str:
+    if not m:
+        return ""
+    names = ["", " in January", " in February", " in March", " in April", " in May",
+             " in June", " in July", " in August", " in September", " in October",
+             " in November", " in December"]
+    return names[m] if 0 <= m < len(names) else ""
 
 
 # ── Data helpers ────────────────────────────────────────────
@@ -165,6 +226,7 @@ def offline_route(text: str) -> tuple[str, list]:
             "• Show who owes you money (\"who's overdue?\")\n"
             "• Send a payment reminder (\"remind Bangalore Brew House\")\n"
             "• Create a pay link or collect a payment (\"pay INV-1020\")\n"
+            "• Answer questions about your books (\"how much did Cardamom & Co. pay?\")\n"
             "• Run the agent crew (\"run the agents\")\n"
             "• Send a test email (\"email a test to aneeshdutt67@gmail.com\")\n"
             "What would you like to do?"
@@ -241,11 +303,24 @@ _SYSTEM = (
 
 
 def chat(messages: list[dict[str, str]]) -> dict[str, Any]:
-    """messages: [{role, content}]. Returns {reply, actions}."""
-    if not settings.llm_enabled:
-        last = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
+    """messages: [{role, content}]. Returns {reply, actions, citations}.
+
+    The tool-calling loop below is Anthropic-specific. For OpenRouter (or no
+    LLM), we use the rule-based intent router — it still answers from live data
+    and takes real actions, so chat works regardless of provider.
+    """
+    last = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
+
+    # "Ask your books" — retrieval-grounded, works across every provider.
+    if is_books_question(last):
+        reply, actions, citations = answer_from_books(last)
+        return {"reply": reply, "actions": actions, "citations": citations,
+                "engine": f"rag+{settings.llm_provider}"}
+
+    if settings.llm_provider != "anthropic":
         reply, actions = offline_route(last)
-        return {"reply": reply, "actions": actions, "engine": "offline"}
+        engine = "offline" if settings.llm_provider == "none" else "openrouter+router"
+        return {"reply": reply, "actions": actions, "citations": [], "engine": engine}
 
     try:
         import anthropic
@@ -270,9 +345,8 @@ def chat(messages: list[dict[str, str]]) -> dict[str, Any]:
                 convo.append({"role": "user", "content": results})
                 continue
             reply = "".join(b.text for b in resp.content if b.type == "text").strip()
-            return {"reply": reply, "actions": actions, "engine": "claude"}
-        return {"reply": "Let me know if you'd like anything else.", "actions": actions, "engine": "claude"}
+            return {"reply": reply, "actions": actions, "citations": [], "engine": "claude"}
+        return {"reply": "Let me know if you'd like anything else.", "actions": actions, "citations": [], "engine": "claude"}
     except Exception:
-        last = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
         reply, actions = offline_route(last)
-        return {"reply": reply, "actions": actions, "engine": "offline"}
+        return {"reply": reply, "actions": actions, "citations": [], "engine": "offline"}
