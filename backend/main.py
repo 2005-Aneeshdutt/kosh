@@ -26,6 +26,7 @@ from backend.routers import (
     collections,
     dashboard,
     forecast,
+    insights,
     live,
     settings as settings_router,
     upload,
@@ -107,6 +108,7 @@ app.include_router(settings_router.router)
 app.include_router(live.router)
 app.include_router(chat.router)
 app.include_router(autopilot.router)
+app.include_router(insights.router)
 
 
 # ── Serve the built React SPA from the same origin ──────────
