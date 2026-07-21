@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import {
-  LayoutDashboard, Wallet, Rocket, FileCheck2, TrendingUp, Table2, Mail, Settings, Bot,
+  LayoutDashboard, Wallet, Rocket, Brain, Gauge, FileCheck2, TrendingUp, Table2, Mail, Settings, Bot,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLive } from "@/context/LiveContext";
@@ -9,6 +9,8 @@ const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/collections", label: "Collections", icon: Wallet },
   { to: "/autopilot", label: "Autopilot", icon: Rocket },
+  { to: "/strategist", label: "Strategist", icon: Brain },
+  { to: "/impact", label: "Impact", icon: Gauge },
   { to: "/reconciliation", label: "Reconciliation", icon: FileCheck2 },
   { to: "/forecast", label: "Forecast", icon: TrendingUp },
   { to: "/ledger", label: "Ledger", icon: Table2 },
