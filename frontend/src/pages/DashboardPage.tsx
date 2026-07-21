@@ -5,6 +5,7 @@ import { CashflowForecast } from "@/components/dashboard/CashflowForecast";
 import { RecentPayments } from "@/components/dashboard/RecentPayments";
 import { AgentActivityFeed } from "@/components/agents/AgentActivityFeed";
 import { AgentCards } from "@/components/agents/AgentCards";
+import { AgentFlow } from "@/components/agents/AgentFlow";
 import { api, type ARAgingResponse, type DashboardMetrics, type ForecastResponse } from "@/lib/api";
 import { useRun } from "@/context/RunContext";
 import { useLive } from "@/context/LiveContext";
@@ -41,10 +42,13 @@ export function DashboardPage() {
         {forecast && <CashflowForecast data={forecast} />}
       </div>
 
+      {/* Live agent pipeline + streaming log side by side */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <RecentPayments />
+        <AgentFlow />
         <AgentActivityFeed />
       </div>
+
+      <RecentPayments />
     </div>
   );
 }
