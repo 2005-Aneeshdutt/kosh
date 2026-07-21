@@ -92,7 +92,8 @@ def health() -> dict:
         "status": "ok",
         "demo_mode": settings.demo_mode,
         "llm_enabled": settings.llm_enabled,
-        "model": settings.model,
+        "llm_provider": settings.llm_provider,
+        "model": settings.active_model,
     }
 
 

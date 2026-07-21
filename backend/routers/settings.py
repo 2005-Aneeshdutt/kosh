@@ -23,7 +23,7 @@ def razorpay_status() -> RazorpayStatus:
         connected=conn.get("connected", False),
         merchant_name=client.merchant_name,
         llm_enabled=settings.llm_enabled,
-        model=settings.model,
+        model=settings.active_model,
     )
 
 

@@ -28,6 +28,11 @@ class Settings:
         self.anthropic_api_key: str = os.getenv("ANTHROPIC_API_KEY", "")
         self.model: str = os.getenv("KOSH_MODEL", "claude-sonnet-5")
 
+        # OpenRouter (OpenAI-compatible gateway) — an alternative to a direct
+        # Anthropic key. If set, it takes priority for agent copy generation.
+        self.openrouter_api_key: str = os.getenv("OPENROUTER_API_KEY", "")
+        self.openrouter_model: str = os.getenv("OPENROUTER_MODEL", "anthropic/claude-3.7-sonnet")
+
         self.backend_port: int = int(os.getenv("BACKEND_PORT", "8000"))
         self.database_url: str = os.getenv("DATABASE_URL", "sqlite:///./kosh.db")
 
@@ -58,8 +63,24 @@ class Settings:
         return bool(self.razorpay_key_id and self.razorpay_key_secret)
 
     @property
+    def llm_provider(self) -> str:
+        """Which LLM backend to use: 'openrouter' | 'anthropic' | 'none'."""
+        if self.openrouter_api_key:
+            return "openrouter"
+        if self.anthropic_api_key:
+            return "anthropic"
+        return "none"
+
+    @property
     def llm_enabled(self) -> bool:
-        return bool(self.anthropic_api_key)
+        return self.llm_provider != "none"
+
+    @property
+    def active_model(self) -> str:
+        """The model string actually in use, for display/health."""
+        if self.llm_provider == "openrouter":
+            return self.openrouter_model
+        return self.model
 
     @property
     def sqlite_path(self) -> str:
