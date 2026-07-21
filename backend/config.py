@@ -31,7 +31,9 @@ class Settings:
         # OpenRouter (OpenAI-compatible gateway) — an alternative to a direct
         # Anthropic key. If set, it takes priority for agent copy generation.
         self.openrouter_api_key: str = os.getenv("OPENROUTER_API_KEY", "")
-        self.openrouter_model: str = os.getenv("OPENROUTER_MODEL", "anthropic/claude-3.7-sonnet")
+        # Cost-optimal default: Claude 3.5 Haiku is cheap (~$0.80/$4 per 1M) and
+        # more than enough for Kosh's short prompts. Override for higher quality.
+        self.openrouter_model: str = os.getenv("OPENROUTER_MODEL", "anthropic/claude-3.5-haiku")
 
         self.backend_port: int = int(os.getenv("BACKEND_PORT", "8000"))
         self.database_url: str = os.getenv("DATABASE_URL", "sqlite:///./kosh.db")
