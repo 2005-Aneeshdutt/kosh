@@ -264,7 +264,31 @@ export const api = {
   autopilotReject: (id: string) => post<Proposal>(`/api/autopilot/proposals/${id}/reject`),
   autopilotPolicy: (p: { auto_max_amount?: number; auto_max_risk?: number }) =>
     post<any>("/api/autopilot/policy", p),
+
+  // insights
+  impact: () => get<ImpactResponse>("/api/impact"),
+  strategistBrief: () => get<StrategistBrief>("/api/strategist/brief"),
 };
+
+export interface ImpactCompare { label: string; without: string; with_kosh: string; unit: string; better: string }
+export interface ImpactResponse {
+  headline: { annual_value: number; hours_saved_monthly: number; cash_recovered: number; dso_reduction: number };
+  comparison: ImpactCompare[];
+  bars: { metric: string; hours: number }[];
+  assumptions: Record<string, number>;
+}
+export interface StrategistRec {
+  priority: "high" | "medium" | "low";
+  title: string;
+  rationale: string;
+  action: ChatAction;
+}
+export interface StrategistBrief {
+  headline: string;
+  recommendations: StrategistRec[];
+  generated_at: string;
+  llm_authored: boolean;
+}
 
 export interface Proposal {
   id: string;
