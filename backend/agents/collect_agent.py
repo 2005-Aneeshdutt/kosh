@@ -134,7 +134,11 @@ async def collect_agent_node(state: MerchantState) -> MerchantState:
 
     actions: list[dict] = []
 
-    for inv in prioritized:
+    # Cap live LLM authoring per run for low latency (and to conserve credits);
+    # the rest use the deterministic template, which is instant.
+    llm_budget = 4
+
+    for idx, inv in enumerate(prioritized):
         emit(
             state,
             AGENT,
@@ -142,12 +146,17 @@ async def collect_agent_node(state: MerchantState) -> MerchantState:
             f"Preparing outreach for {inv['customer_name']} "
             f"({_rupees(inv['amount'])}, risk {inv['risk_score']:.2f})…",
         )
-        await asyncio.sleep(0.25)
+        await asyncio.sleep(0.12)
 
         pay_url = checkout_link(inv)
         inv["payment_link_url"] = pay_url
 
-        message, tone, used_llm = build_reminder(inv, pay_url)
+        if settings.llm_enabled and idx < llm_budget:
+            message, tone, used_llm = build_reminder(inv, pay_url)
+        else:
+            tone = _tone_for(inv.get("reminders_sent", 0))
+            message = _template_reminder(inv, tone, pay_url)
+            used_llm = False
         inv["reminders_sent"] = inv.get("reminders_sent", 0) + 1
         inv["last_reminder_date"] = datetime.now(timezone.utc).isoformat()
 
@@ -178,7 +187,7 @@ async def collect_agent_node(state: MerchantState) -> MerchantState:
             f"({_rupees(inv['amount'])}) — {delivered}.",
             {"invoice_id": inv["id"], "payment_link_url": pay_url, "email_id": email["id"]},
         )
-        await asyncio.sleep(0.15)
+        await asyncio.sleep(0.08)
 
     emit(
         state,
