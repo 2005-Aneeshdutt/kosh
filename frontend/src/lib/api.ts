@@ -277,6 +277,7 @@ export const api = {
 export interface StudioAgent {
   key: string; name: string; node: string; color: string;
   description: string; tools: string[]; system: string; enabled: boolean;
+  status?: string; detail?: string; last_run?: string | null;
 }
 export interface StudioConfig {
   provider: string;

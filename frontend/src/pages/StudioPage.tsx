@@ -9,6 +9,7 @@ import { Card, CardHeader, CardTitle, Badge, Button } from "@/components/ui/prim
 import { AgentFlow } from "@/components/agents/AgentFlow";
 import { api, type StudioConfig } from "@/lib/api";
 import { useRun } from "@/context/RunContext";
+import { timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const ICONS: Record<string, typeof Wallet> = {
@@ -16,12 +17,13 @@ const ICONS: Record<string, typeof Wallet> = {
 };
 
 export function StudioPage() {
-  const { runAll, running } = useRun();
+  const { runAll, running, runVersion } = useRun();
   const [cfg, setCfg] = useState<StudioConfig | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  useEffect(() => { api.studioConfig().then(setCfg).catch(() => {}); }, []);
+  // Refetch after a run completes so per-agent run history updates.
+  useEffect(() => { api.studioConfig().then(setCfg).catch(() => {}); }, [runVersion]);
 
   async function toggle(key: string, enabled: boolean) {
     setBusy(key);
@@ -94,6 +96,16 @@ export function StudioPage() {
                   >
                     <span className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform", a.enabled ? "translate-x-5" : "translate-x-0.5")} />
                   </button>
+                </div>
+
+                {/* Run history */}
+                <div className="mt-3 flex items-center gap-2 rounded-lg bg-slate-50 px-2.5 py-1.5 text-[11px]">
+                  <span className={cn(
+                    "h-1.5 w-1.5 rounded-full",
+                    a.status === "done" ? "bg-success" : a.status === "active" ? "bg-brand" : a.status === "error" ? "bg-danger" : "bg-slate-300",
+                  )} />
+                  <span className="font-medium text-slate-600">{a.detail || "not run yet"}</span>
+                  {a.last_run && <span className="ml-auto text-slate-400">{timeAgo(a.last_run)}</span>}
                 </div>
 
                 <div className="mt-3 flex flex-wrap gap-1.5">
