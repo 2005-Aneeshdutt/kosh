@@ -149,6 +149,12 @@ def _weekday(date_str: str) -> str:
 
 
 async def oracle_agent_node(state: MerchantState) -> MerchantState:
+    from backend.services import studio
+
+    if not studio.enabled(AGENT):
+        emit(state, AGENT, "result", "Oracle is disabled in Agent Studio — skipping this run.")
+        return {}
+
     emit(state, AGENT, "thinking", "Learning daily inflow patterns from settlement history…")
     await asyncio.sleep(0.5)
 

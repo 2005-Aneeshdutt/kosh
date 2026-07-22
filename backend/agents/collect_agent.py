@@ -113,6 +113,12 @@ def send_reminder_email(inv: dict, message: str, link: str) -> dict:
 
 
 async def collect_agent_node(state: MerchantState) -> MerchantState:
+    from backend.services import studio
+
+    if not studio.enabled(AGENT):
+        emit(state, AGENT, "result", "Collect is disabled in Agent Studio — skipping this run.")
+        return {}
+
     emit(state, AGENT, "thinking", "Scoring outstanding invoices by likelihood-to-pay…")
     await asyncio.sleep(0.4)
 

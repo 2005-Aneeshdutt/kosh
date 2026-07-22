@@ -169,6 +169,12 @@ def build_summary(result: dict[str, Any]) -> str:
 
 
 async def recon_agent_node(state: MerchantState) -> MerchantState:
+    from backend.services import studio
+
+    if not studio.enabled(AGENT):
+        emit(state, AGENT, "result", "Recon is disabled in Agent Studio — skipping this run.")
+        return {"reconciliation_result": {"ran": False, "summary": "Recon disabled in Studio."}}
+
     bank_entries = state.get("bank_entries", [])
     settlements = state.get("settlements", [])
 

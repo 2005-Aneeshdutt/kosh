@@ -81,6 +81,12 @@ def _template_insights(health: dict, anomalies: list[dict]) -> list[str]:
 
 
 async def pulse_agent_node(state: MerchantState) -> MerchantState:
+    from backend.services import studio
+
+    if not studio.enabled(AGENT):
+        emit(state, AGENT, "result", "Pulse is disabled in Agent Studio — skipping this run.")
+        return {}
+
     emit(state, AGENT, "thinking", "Computing live payment success metrics…")
     await asyncio.sleep(0.4)
 
