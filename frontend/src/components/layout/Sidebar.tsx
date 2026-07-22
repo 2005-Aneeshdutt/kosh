@@ -1,9 +1,11 @@
-import { NavLink } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Wallet, Rocket, Brain, Gauge, Boxes, FileCheck2, TrendingUp, Table2, Mail, Settings, Bot,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLive } from "@/context/LiveContext";
+import { api } from "@/lib/api";
 
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -27,6 +29,15 @@ const AGENTS = [
 
 export function Sidebar() {
   const { connected } = useLive();
+  const { pathname } = useLocation();
+  const [disabled, setDisabled] = useState<Set<string>>(new Set());
+
+  // Reflect Agent Studio enable/disable state in the crew list.
+  useEffect(() => {
+    api.studioConfig()
+      .then((c) => setDisabled(new Set(c.agents.filter((a) => !a.enabled).map((a) => a.key))))
+      .catch(() => {});
+  }, [pathname]);
   return (
     <aside className="flex h-screen w-64 shrink-0 flex-col bg-navy-900 text-slate-300">
       <div className="flex items-center gap-3 px-6 py-6">
@@ -72,19 +83,22 @@ export function Sidebar() {
           <Bot className="h-3.5 w-3.5" /> Agent Crew <span className="ml-auto text-[9px] font-normal normal-case text-slate-600">see how →</span>
         </NavLink>
         <div className="space-y-1">
-          {AGENTS.map((a) => (
-            <NavLink
-              key={a.name}
-              to={`/agents?a=${a.key}`}
-              className="group -mx-2 flex items-start gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-white/5"
-            >
-              <span className={cn("mt-1 h-2 w-2 shrink-0 rounded-full", a.color)} />
-              <div>
-                <div className="text-[13px] font-semibold text-slate-200 group-hover:text-white">{a.name}</div>
-                <div className="text-[11px] text-slate-500">{a.desc}</div>
-              </div>
-            </NavLink>
-          ))}
+          {AGENTS.map((a) => {
+            const off = disabled.has(a.key);
+            return (
+              <NavLink
+                key={a.name}
+                to={`/agents?a=${a.key}`}
+                className={cn("group -mx-2 flex items-start gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-white/5", off && "opacity-45")}
+              >
+                <span className={cn("mt-1 h-2 w-2 shrink-0 rounded-full", off ? "bg-slate-600" : a.color)} />
+                <div>
+                  <div className={cn("text-[13px] font-semibold text-slate-200 group-hover:text-white", off && "line-through")}>{a.name}</div>
+                  <div className="text-[11px] text-slate-500">{off ? "disabled in Studio" : a.desc}</div>
+                </div>
+              </NavLink>
+            );
+          })}
         </div>
       </div>
 
