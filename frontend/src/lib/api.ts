@@ -268,7 +268,23 @@ export const api = {
   // insights
   impact: () => get<ImpactResponse>("/api/impact"),
   strategistBrief: () => get<StrategistBrief>("/api/strategist/brief"),
+
+  // agent studio
+  studioConfig: () => get<StudioConfig>("/api/studio/config"),
+  studioToggle: (key: string, enabled: boolean) => post<StudioConfig>(`/api/studio/agents/${key}`, { enabled }),
 };
+
+export interface StudioAgent {
+  key: string; name: string; node: string; color: string;
+  description: string; tools: string[]; system: string; enabled: boolean;
+}
+export interface StudioConfig {
+  provider: string;
+  model: string;
+  orchestrator: string;
+  agents: StudioAgent[];
+  graph: { nodes: { id: string; label: string; kind: string }[]; edges: [string, string][] };
+}
 
 export interface ImpactCompare { label: string; without: string; with_kosh: string; unit: string; better: string }
 export interface ImpactResponse {
