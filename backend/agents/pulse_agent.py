@@ -19,7 +19,11 @@ def compute_health(payments: list[dict], metrics: list[dict]) -> dict:
     total = len(payments)
     captured = sum(1 for p in payments if p["status"] == "captured")
     failed = sum(1 for p in payments if p["status"] == "failed")
-    success_rate = round(captured / total, 4) if total else 0.0
+    # Payment success rate = captured / (captured + failed). Refunds are a
+    # settled payment that was later returned, not a failed attempt, so they
+    # are excluded from the denominator (matches the Copilot's definition).
+    attempts = captured + failed
+    success_rate = round(captured / attempts, 4) if attempts else 0.0
 
     by_method = anomaly_detector.method_failure_breakdown(payments)
 
