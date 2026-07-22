@@ -76,7 +76,28 @@ def set_enabled(key: str, value: bool) -> None:
 
 
 def config() -> dict[str, Any]:
-    agents = [{**a, "enabled": _ENABLED.get(a["key"], True)} for a in _AGENTS]
+    from backend.agents.store import store
+
+    latest = store.latest or {}
+    recon = latest.get("reconciliation_result") or {}
+    detail = {
+        "collect": f"{len(latest.get('collection_actions', []))} reminders sent",
+        "recon": "reconciled" if recon.get("ran") else "awaiting statement",
+        "oracle": "7-day forecast ready",
+        "pulse": f"{len(latest.get('anomalies', []))} anomalies flagged",
+    }
+    last_run = latest.get("last_run")
+
+    agents = [
+        {
+            **a,
+            "enabled": _ENABLED.get(a["key"], True),
+            "status": store.status.get(a["key"], "idle"),
+            "detail": detail.get(a["key"], "") if latest else "not run yet",
+            "last_run": last_run,
+        }
+        for a in _AGENTS
+    ]
     return {
         "provider": settings.llm_provider,
         "model": settings.active_model,
