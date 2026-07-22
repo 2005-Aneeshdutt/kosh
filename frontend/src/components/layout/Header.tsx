@@ -15,6 +15,7 @@ const TITLES: Record<string, { title: string; subtitle: string }> = {
   "/strategist": { title: "Strategist", subtitle: "AI advisor — turn your live data into decisions" },
   "/impact": { title: "Impact", subtitle: "What Kosh is worth — with vs. without" },
   "/agents": { title: "Agent Crew", subtitle: "How each agent works — and what it replaces" },
+  "/studio": { title: "Agent Studio", subtitle: "Configure, inspect and deploy the crew" },
   "/reconciliation": { title: "Reconciliation", subtitle: "Match settlements to your bank statement" },
   "/forecast": { title: "Cashflow Forecast", subtitle: "7-day outlook with early-warning alerts" },
   "/ledger": { title: "Live Ledger", subtitle: "Real-time transactions · export & Sheets sync" },
