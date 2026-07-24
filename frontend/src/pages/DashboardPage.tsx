@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { MetricCards } from "@/components/dashboard/MetricCards";
+import { AnomalyBanner } from "@/components/dashboard/AnomalyBanner";
 import { ARAgingChart } from "@/components/dashboard/ARAgingChart";
 import { CashflowForecast } from "@/components/dashboard/CashflowForecast";
 import { RecentPayments } from "@/components/dashboard/RecentPayments";
@@ -34,6 +35,7 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      <AnomalyBanner />
       <AgentCards />
       {metrics && <MetricCards cards={metrics.cards} liveKey={liveKey} />}
 

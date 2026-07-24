@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Send, Loader2, ExternalLink } from "lucide-react";
+import { Send, Loader2, ExternalLink, Brain } from "lucide-react";
 import { toast } from "sonner";
 import { Card, Badge, Button, Progress } from "@/components/ui/primitives";
 import { ReminderModal } from "@/components/collections/ReminderModal";
+import { DecisionTrace } from "@/components/collections/DecisionTrace";
 import { api, type DebtorRow, type ReminderResponse } from "@/lib/api";
 import { formatPaisa, formatDate } from "@/lib/format";
 import { useRun } from "@/context/RunContext";
@@ -29,6 +30,7 @@ export function CollectionsPage() {
   const [debtors, setDebtors] = useState<DebtorRow[]>([]);
   const [sending, setSending] = useState<string | null>(null);
   const [modal, setModal] = useState<{ reminder: ReminderResponse; customer: string } | null>(null);
+  const [explain, setExplain] = useState<string | null>(null);
 
   const load = () => api.debtors().then(setDebtors).catch(() => {});
   useEffect(() => {
@@ -98,14 +100,19 @@ export function CollectionsPage() {
                     )}
                   </td>
                   <td className="px-4 py-3.5">
-                    <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setExplain(d.id)}
+                      className="group flex items-center gap-2 rounded-lg px-1 py-0.5 transition hover:bg-brand/5"
+                      title="Explain this risk score"
+                    >
                       <Progress
                         value={d.risk_score * 100}
                         className="w-20"
                         barClassName={BAND_BAR[d.risk_band]}
                       />
                       <Badge variant={BAND_VARIANT[d.risk_band]}>{d.risk_score.toFixed(2)}</Badge>
-                    </div>
+                      <Brain className="h-3.5 w-3.5 text-slate-300 transition group-hover:text-brand" />
+                    </button>
                   </td>
                   <td className="px-4 py-3.5 text-muted">{d.reminders_sent}</td>
                   <td className="px-6 py-3.5">
@@ -142,6 +149,8 @@ export function CollectionsPage() {
           onClose={() => setModal(null)}
         />
       )}
+
+      <DecisionTrace invoiceId={explain} onClose={() => setExplain(null)} />
     </div>
   );
 }

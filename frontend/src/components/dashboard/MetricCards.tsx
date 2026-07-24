@@ -37,7 +37,7 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
 
 export function MetricCards({ cards, liveKey }: { cards: MetricCardType[]; liveKey?: string }) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div data-tour="metrics" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {cards.map((c) => {
         const color = ACCENT[c.key] ?? "#3395FF";
         const up = c.trend_direction === "up";
