@@ -272,7 +272,68 @@ export const api = {
   // agent studio
   studioConfig: () => get<StudioConfig>("/api/studio/config"),
   studioToggle: (key: string, enabled: boolean) => post<StudioConfig>(`/api/studio/agents/${key}`, { enabled }),
+
+  // audit + anomalies + decision trace
+  audit: (opts?: { limit?: number; actor_type?: string; action_prefix?: string }) => {
+    const q = new URLSearchParams();
+    if (opts?.limit) q.set("limit", String(opts.limit));
+    if (opts?.actor_type && opts.actor_type !== "all") q.set("actor_type", opts.actor_type);
+    if (opts?.action_prefix) q.set("action_prefix", opts.action_prefix);
+    const qs = q.toString();
+    return get<AuditResponse>(`/api/audit${qs ? `?${qs}` : ""}`);
+  },
+  anomalies: () => get<AnomalyResponse>("/api/anomalies"),
+  explainDebtor: (invoiceId: string) => get<DecisionTrace>(`/api/collections/explain/${invoiceId}`),
 };
+
+export interface AuditEntry {
+  id: number;
+  ts: string;
+  actor_type: "agent" | "human" | "system";
+  actor: string;
+  action: string;
+  target?: string | null;
+  detail?: string | null;
+  amount?: number | null;
+  metadata?: Record<string, unknown> | null;
+}
+export interface AuditResponse {
+  entries: AuditEntry[];
+  summary: { total: number; agent: number; human: number; system: number };
+}
+export interface Anomaly {
+  type: string;
+  severity: "info" | "warning" | "critical";
+  metric: string;
+  current_value: number;
+  expected_value: number;
+  z_score: number;
+  message: string;
+  timestamp: string;
+}
+export interface MethodHealth {
+  total: number; success: number; failed: number;
+  success_rate: number; reasons: Record<string, number>;
+}
+export interface AnomalyResponse {
+  anomalies: Anomaly[];
+  method_health: Record<string, MethodHealth>;
+  checked_at?: string | null;
+}
+export interface DecisionFactor {
+  label: string; value: string; signal: number; weight: number; contribution: number;
+}
+export interface DecisionTrace {
+  invoice_id: string;
+  customer_name: string;
+  amount: number;
+  days_overdue: number;
+  risk_score: number;
+  risk_band: string;
+  factors: DecisionFactor[];
+  recommended_tone: string;
+  recommendation: string;
+}
 
 export interface StudioAgent {
   key: string; name: string; node: string; color: string;

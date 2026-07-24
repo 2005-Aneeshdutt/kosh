@@ -34,6 +34,20 @@ export function ChatWidget() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [msgs, open]);
 
+  // Allow other surfaces (e.g. the ⌘K command palette) to open the Copilot,
+  // optionally pre-filling or immediately sending a prompt.
+  useEffect(() => {
+    const onOpen = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { prefill?: string; send?: string } | undefined;
+      setOpen(true);
+      if (detail?.send) send(detail.send);
+      else if (detail?.prefill) setInput(detail.prefill);
+    };
+    window.addEventListener("kosh:open-chat", onOpen as EventListener);
+    return () => window.removeEventListener("kosh:open-chat", onOpen as EventListener);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [msgs, busy]);
+
   async function send(text: string) {
     const clean = text.trim();
     if (!clean || busy) return;
@@ -62,6 +76,7 @@ export function ChatWidget() {
     <>
       {/* Launcher */}
       <button
+        data-tour="copilot"
         onClick={() => setOpen((o) => !o)}
         className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand text-white shadow-glow transition hover:bg-brand-dark"
       >
