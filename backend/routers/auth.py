@@ -54,6 +54,9 @@ def me(authorization: str | None = Header(default=None)) -> SessionUser:
 
 @router.post("/logout")
 def logout(authorization: str | None = Header(default=None)) -> dict:
+    session = auth.get_session(auth.token_from_header(authorization))
+    if session:
+        audit.human(session.get("name", "User"), "user.logout", detail="Signed out")
     auth.destroy_session(auth.token_from_header(authorization))
     return {"ok": True}
 

@@ -85,8 +85,16 @@ def build_reminder(inv: dict, link: str) -> tuple[str, str, bool]:
     return text, tone, used
 
 
-def send_reminder_email(inv: dict, message: str, link: str) -> dict:
-    """Render + dispatch a payment reminder email (real SMTP or outbox)."""
+def send_reminder_email(
+    inv: dict, message: str, link: str,
+    *, actor: str = "Collect agent", actor_type: str = "agent",
+) -> dict:
+    """Render + dispatch a payment reminder email (real SMTP or outbox).
+
+    This is the single choke point every reminder flows through — manual sends,
+    the agent crew, the Copilot and Autopilot — so it also records the audit
+    trail entry, attributed to whoever triggered it via ``actor``.
+    """
     tone = _tone_for(inv.get("reminders_sent", 0))
     accent = {"friendly": "#3B82F6", "firm": "#F59E0B", "urgent": "#EF4444"}[tone]
     # Turn the plain reminder into HTML paragraphs, dropping the raw link line
@@ -102,7 +110,7 @@ def send_reminder_email(inv: dict, message: str, link: str) -> dict:
         cta_url=link,
         accent=accent,
     )
-    return mailer.send(
+    email = mailer.send(
         kind="reminder",
         to_name=inv["customer_name"],
         to_email=inv["customer_email"],
@@ -110,6 +118,14 @@ def send_reminder_email(inv: dict, message: str, link: str) -> dict:
         html=html,
         meta={"invoice_id": inv["id"], "payment_link_url": link, "tone": tone},
     )
+    from backend.services import audit
+    audit.record(
+        actor_type, actor, "reminder.sent",
+        target=inv["id"], amount=inv["amount"],
+        detail=f"{tone.capitalize()} reminder to {inv['customer_name']}"
+        f"{' · delivered' if email.get('delivered') else ' · queued'}",
+    )
+    return email
 
 
 async def collect_agent_node(state: MerchantState) -> MerchantState:

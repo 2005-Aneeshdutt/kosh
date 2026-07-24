@@ -17,12 +17,14 @@ def status() -> dict:
 @router.post("/start")
 async def start() -> dict:
     ap.autopilot.start()
+    audit.human("You", "autopilot.started", detail="Enabled autonomous collections")
     return ap.autopilot.status()
 
 
 @router.post("/stop")
 async def stop() -> dict:
     ap.autopilot.stop()
+    audit.human("You", "autopilot.stopped", detail="Paused autonomous collections")
     return ap.autopilot.status()
 
 

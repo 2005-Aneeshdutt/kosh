@@ -157,7 +157,7 @@ def tool_send_reminder(invoice_id: str) -> tuple[str, list]:
         return f"I couldn't find invoice {invoice_id}.", []
     pay_url = checkout_link(inv)
     message, tone, _ = build_reminder(inv, pay_url)
-    email = send_reminder_email(inv, message, pay_url)
+    email = send_reminder_email(inv, message, pay_url, actor="Copilot", actor_type="agent")
     dest = "delivered" if email["delivered"] else "queued in the Outbox"
     reply = (f"Done — I sent a {tone} payment reminder to {inv['customer_name']} for "
              f"{_rupees(inv['amount'])} ({inv['id']}). The email is {dest}.")

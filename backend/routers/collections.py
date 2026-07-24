@@ -8,7 +8,7 @@ from fastapi import APIRouter, HTTPException
 from backend.agents.collect_agent import build_reminder, checkout_link, send_reminder_email
 from backend.agents.store import store
 from backend.models.schemas import DebtorRow, SendReminderRequest, SendReminderResponse
-from backend.services import audit, debtor_scorer
+from backend.services import debtor_scorer
 
 router = APIRouter(prefix="/api/collections", tags=["collections"])
 
@@ -88,13 +88,7 @@ def send_reminder(req: SendReminderRequest) -> SendReminderResponse:
     invoice["reminders_sent"] = invoice.get("reminders_sent", 0) + 1
     invoice["last_reminder_date"] = datetime.now(timezone.utc).isoformat()
 
-    email = send_reminder_email(invoice, message, pay_url)
-    audit.human(
-        "You", "reminder.sent",
-        target=invoice["id"], amount=invoice["amount"],
-        detail=f"{tone.capitalize()} reminder to {invoice['customer_name']}"
-        f"{' · delivered' if email['delivered'] else ''}",
-    )
+    email = send_reminder_email(invoice, message, pay_url, actor="You", actor_type="human")
 
     return SendReminderResponse(
         invoice_id=invoice["id"],

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Bot, User, Cpu, ScrollText, CheckCircle2, XCircle, Send, CreditCard,
-  LogIn, Sparkles, ShieldCheck,
+  LogIn, LogOut, Sparkles, ShieldCheck, Play, Pause, FileCheck2, ToggleLeft,
 } from "lucide-react";
 import { Card, Badge, Skeleton } from "@/components/ui/primitives";
 import { api, type AuditEntry } from "@/lib/api";
@@ -24,7 +24,12 @@ const ACTION_ICON: Record<string, typeof Send> = {
   "proposal.rejected": XCircle,
   "proposal.auto_executed": Sparkles,
   "agents.run": Sparkles,
+  "autopilot.started": Play,
+  "autopilot.stopped": Pause,
+  "reconciliation.upload": FileCheck2,
+  "studio.agent_toggled": ToggleLeft,
   "user.login": LogIn,
+  "user.logout": LogOut,
 };
 
 const FILTERS = [

@@ -151,7 +151,11 @@ def _execute(proposal: dict[str, Any], auto: bool) -> dict[str, Any]:
                 message = (f"Special offer for {inv['customer_name']}: settle invoice "
                            f"{inv['id']} within 48 hours and get 2% off. "
                            f"Pay now: {pay_url}")
-            email = send_reminder_email(inv, message, pay_url)
+            email = send_reminder_email(
+                inv, message, pay_url,
+                actor="Autopilot" if auto else "You (via Autopilot)",
+                actor_type="agent" if auto else "human",
+            )
             proposal["result"] = (
                 f"{'Discount offer' if ptype == 'discount_offer' else 'Reminder'} "
                 f"{'emailed' if email['delivered'] else 'queued'} to {inv['customer_name']}"

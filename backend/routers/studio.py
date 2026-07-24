@@ -4,7 +4,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from backend.services import studio
+from backend.services import audit, studio
 
 router = APIRouter(prefix="/api/studio", tags=["studio"])
 
@@ -23,4 +23,8 @@ def toggle_agent(key: str, req: ToggleRequest) -> dict:
     if key not in {"pulse", "oracle", "collect", "recon"}:
         raise HTTPException(status_code=404, detail="Unknown agent")
     studio.set_enabled(key, req.enabled)
+    audit.human(
+        "You", "studio.agent_toggled",
+        target=key, detail=f"{key.capitalize()} agent {'enabled' if req.enabled else 'disabled'} in Studio",
+    )
     return studio.config()

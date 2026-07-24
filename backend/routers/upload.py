@@ -8,7 +8,7 @@ from backend.agents.recon_agent import build_summary, reconcile
 from backend.agents.store import store
 from backend.models.schemas import ReconEntry, ReconResult, UploadResponse
 from backend.razorpay_client.client import get_client
-from backend.services import invoice_parser
+from backend.services import audit, invoice_parser
 
 router = APIRouter(prefix="/api/reconciliation", tags=["reconciliation"])
 
@@ -38,6 +38,11 @@ async def upload_statement(file: UploadFile = File(...)) -> UploadResponse:
     recon = reconcile(rows, settlements)
     recon["summary"] = build_summary(recon)
     store.last_recon = recon
+    audit.human(
+        "You", "reconciliation.upload",
+        target=file.filename or "statement.csv",
+        detail=f"{len(rows)} rows · {recon.get('matched', 0)}/{recon.get('total_settlements', 0)} settlements matched",
+    )
 
     return UploadResponse(
         filename=file.filename or "statement.csv",
