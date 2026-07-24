@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-route
 import { Toaster } from "sonner";
 import { Loader2 } from "lucide-react";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/context/ThemeContext";
 import { LiveProvider } from "@/context/LiveContext";
 import { RunProvider } from "@/context/RunContext";
 import { AppShell } from "@/components/layout/AppShell";
@@ -20,6 +21,11 @@ import { LedgerPage } from "@/pages/LedgerPage";
 import { AuditPage } from "@/pages/AuditPage";
 import { MailPage } from "@/pages/MailPage";
 import { SettingsPage } from "@/pages/SettingsPage";
+
+function ThemedToaster() {
+  const { theme } = useTheme();
+  return <Toaster position="bottom-right" richColors theme={theme} />;
+}
 
 function Protected({ children }: { children: React.ReactNode }) {
   const { user, ready } = useAuth();
@@ -71,7 +77,7 @@ export default function App() {
           <Route path="/pay/:invoiceId" element={<CheckoutPage />} />
           <Route path="/*" element={<Protected><Shell /></Protected>} />
         </Routes>
-        <Toaster position="bottom-right" richColors />
+        <ThemedToaster />
       </AuthProvider>
     </BrowserRouter>
   );

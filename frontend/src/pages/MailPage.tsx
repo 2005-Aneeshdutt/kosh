@@ -58,8 +58,8 @@ export function MailPage() {
                 key={e.id}
                 onClick={() => setSelected(e.id)}
                 className={cn(
-                  "flex w-full flex-col gap-1 border-b border-slate-50 px-5 py-3 text-left transition hover:bg-slate-50",
-                  selected === e.id && "bg-brand-light"
+                  "flex w-full flex-col gap-1 border-b border-border/50 px-5 py-3 text-left transition hover:bg-slate-50",
+                  selected === e.id && "bg-brand/10 ring-1 ring-inset ring-brand/20"
                 )}
               >
                 <div className="flex items-center justify-between">

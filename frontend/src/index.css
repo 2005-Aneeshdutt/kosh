@@ -89,7 +89,16 @@
   .dark .bg-white { background-color: rgb(var(--c-card)); }
   .dark .bg-slate-50 { background-color: rgb(var(--c-surface)); }
   .dark .bg-slate-100 { background-color: rgb(255 255 255 / 0.08); }
+  /* Subtle slate tints (opacity variants) → faint light overlay on dark. */
+  .dark .bg-slate-50\/30,
+  .dark .bg-slate-50\/40,
+  .dark .bg-slate-50\/50,
+  .dark .bg-slate-50\/60 { background-color: rgb(255 255 255 / 0.04); }
+  .dark .bg-slate-100\/80 { background-color: rgb(255 255 255 / 0.08); }
+  .dark .bg-white\/70 { background-color: rgb(var(--c-card) / 0.7); }
+  .dark .border-slate-50 { border-color: rgb(255 255 255 / 0.06); }
   .dark .hover\:bg-slate-50:hover { background-color: rgb(255 255 255 / 0.05); }
+  .dark .hover\:bg-slate-50\/50:hover { background-color: rgb(255 255 255 / 0.05); }
   .dark .hover\:bg-slate-100\/80:hover { background-color: rgb(255 255 255 / 0.08); }
   .dark .text-slate-700 { color: rgb(203 213 225); }
   .dark .text-slate-600 { color: rgb(203 213 225); }

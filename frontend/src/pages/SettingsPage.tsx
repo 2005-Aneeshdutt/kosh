@@ -106,7 +106,7 @@ export function SettingsPage() {
           <Field label="From name"><input value={smtp.from_name} onChange={(e) => setSmtp({ ...smtp, from_name: e.target.value })} className={inp} /></Field>
         </div>
 
-        <div className="mt-4 rounded-xl border border-brand/20 bg-brand-light/60 p-3">
+        <div className="mt-4 rounded-xl border border-brand/20 bg-brand-light/60 p-3 dark:bg-brand/10">
           <Field label="Deliver all demo emails to (recipient override)">
             <input value={smtp.redirect_to} onChange={(e) => setSmtp({ ...smtp, redirect_to: e.target.value })} placeholder="aneeshdutt67@gmail.com" className={inp} />
           </Field>

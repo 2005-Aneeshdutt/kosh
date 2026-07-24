@@ -70,7 +70,7 @@ export function LedgerPage() {
 
         <div className="scroll-thin overflow-auto" style={{ maxHeight: 560 }}>
           <table className="w-full text-sm">
-            <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur">
+            <thead className="sticky top-0 z-10 bg-surface/95 backdrop-blur">
               <tr className="text-left text-xs uppercase tracking-wide text-muted">
                 <th className="px-6 py-3 font-medium">When</th>
                 <th className="px-4 py-3 font-medium">Type</th>

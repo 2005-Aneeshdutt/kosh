@@ -34,11 +34,17 @@ export function formatTime(iso: string): string {
 
 export function timeAgo(iso: string): string {
   const d = new Date(iso).getTime();
-  const secs = Math.round((Date.now() - d) / 1000);
-  if (secs < 60) return `${secs}s ago`;
+  if (isNaN(d)) return "—";
+  const diff = Date.now() - d;
+  const future = diff < 0;
+  const secs = Math.round(Math.abs(diff) / 1000);
+  const fmt = (n: number, unit: string) => (future ? `in ${n}${unit}` : `${n}${unit} ago`);
+  if (secs < 45) return future ? "soon" : "just now";
   const mins = Math.round(secs / 60);
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 60) return fmt(mins, "m");
   const hrs = Math.round(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.round(hrs / 24)}d ago`;
+  if (hrs < 24) return fmt(hrs, "h");
+  const days = Math.round(hrs / 24);
+  if (days < 30) return fmt(days, "d");
+  return formatDate(iso);
 }
