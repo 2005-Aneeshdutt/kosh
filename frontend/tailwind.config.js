@@ -5,12 +5,14 @@ export default {
   theme: {
     extend: {
       colors: {
-        border: "hsl(214 32% 91%)",
-        canvas: "#F5F7FB",
-        background: "#F5F7FB",
-        card: "#FFFFFF",
-        ink: "#0A1020",
-        muted: "#64748B",
+        // Theme-aware surfaces (flip under `.dark` — see index.css :root/.dark vars).
+        border: "rgb(var(--c-border) / <alpha-value>)",
+        canvas: "rgb(var(--c-canvas) / <alpha-value>)",
+        background: "rgb(var(--c-canvas) / <alpha-value>)",
+        card: "rgb(var(--c-card) / <alpha-value>)",
+        surface: "rgb(var(--c-surface) / <alpha-value>)",
+        ink: "rgb(var(--c-ink) / <alpha-value>)",
+        muted: "rgb(var(--c-muted) / <alpha-value>)",
         brand: {
           DEFAULT: "#3395FF",
           dark: "#1E6FE0",

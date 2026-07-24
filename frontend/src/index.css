@@ -5,6 +5,26 @@
 @tailwind utilities;
 
 @layer base {
+  /* Theme tokens — RGB channels so Tailwind's /alpha modifiers keep working. */
+  :root {
+    --c-border: 226 232 240;   /* slate-200 */
+    --c-canvas: 245 247 251;
+    --c-card: 255 255 255;
+    --c-surface: 248 250 252;  /* slate-50 — elevated sub-panels */
+    --c-ink: 10 16 32;
+    --c-muted: 100 116 139;
+    color-scheme: light;
+  }
+  .dark {
+    --c-border: 39 51 78;
+    --c-canvas: 8 13 27;
+    --c-card: 17 26 46;
+    --c-surface: 26 37 61;
+    --c-ink: 232 237 245;
+    --c-muted: 148 163 184;
+    color-scheme: dark;
+  }
+
   * {
     @apply border-border;
   }
@@ -14,13 +34,19 @@
   }
   body {
     @apply bg-canvas text-ink font-sans antialiased;
-    /* A soft, futuristic light mesh — premium but never noisy. */
-    background-color: #F5F7FB;
+    /* A soft, futuristic mesh — premium but never noisy. */
     background-image:
       radial-gradient(60rem 60rem at 108% -10%, rgba(51, 149, 255, 0.10), transparent 60%),
       radial-gradient(52rem 52rem at -8% 8%, rgba(139, 92, 246, 0.08), transparent 55%),
       radial-gradient(46rem 46rem at 50% 120%, rgba(16, 185, 129, 0.06), transparent 60%);
     background-attachment: fixed;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  .dark body {
+    background-image:
+      radial-gradient(60rem 60rem at 108% -10%, rgba(51, 149, 255, 0.16), transparent 60%),
+      radial-gradient(52rem 52rem at -8% 8%, rgba(139, 92, 246, 0.14), transparent 55%),
+      radial-gradient(46rem 46rem at 50% 120%, rgba(16, 185, 129, 0.08), transparent 60%);
   }
 }
 
@@ -35,6 +61,9 @@
     backdrop-filter: blur(14px) saturate(160%);
     -webkit-backdrop-filter: blur(14px) saturate(160%);
   }
+  .dark .glass {
+    background: rgba(15, 23, 42, 0.62);
+  }
   .glass-dark {
     background: rgba(10, 16, 32, 0.55);
     backdrop-filter: blur(14px) saturate(160%);
@@ -44,6 +73,34 @@
     background-image: radial-gradient(rgba(15, 23, 42, 0.05) 1px, transparent 1px);
     background-size: 22px 22px;
   }
+  .dark .grid-bg {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  }
+
+  /* Dark remaps for hardcoded light utilities used across pages, so the whole
+     app follows the theme without touching 200+ call sites. Always-dark
+     surfaces (sidebar/login/hero) use opacity variants like bg-white/5, which
+     these plain-class rules deliberately do not match. */
+  .dark .bg-white { background-color: rgb(var(--c-card)); }
+  .dark .bg-slate-50 { background-color: rgb(var(--c-surface)); }
+  .dark .bg-slate-100 { background-color: rgb(255 255 255 / 0.08); }
+  .dark .hover\:bg-slate-50:hover { background-color: rgb(255 255 255 / 0.05); }
+  .dark .hover\:bg-slate-100\/80:hover { background-color: rgb(255 255 255 / 0.08); }
+  .dark .text-slate-700 { color: rgb(203 213 225); }
+  .dark .text-slate-600 { color: rgb(203 213 225); }
+  .dark .text-slate-500 { color: rgb(148 163 184); }
+  .dark .border-slate-200 { border-color: rgb(var(--c-border)); }
+  /* Colored badge tints read better slightly deeper on a dark canvas. */
+  .dark .bg-emerald-50 { background-color: rgb(6 78 59 / 0.4); }
+  .dark .bg-amber-50 { background-color: rgb(120 53 15 / 0.4); }
+  .dark .bg-red-50 { background-color: rgb(127 29 29 / 0.4); }
+  .dark .bg-blue-50 { background-color: rgb(30 58 138 / 0.4); }
+  .dark .bg-violet-50 { background-color: rgb(76 29 149 / 0.4); }
+  .dark .text-emerald-700 { color: rgb(110 231 183); }
+  .dark .text-amber-700 { color: rgb(252 211 77); }
+  .dark .text-red-700 { color: rgb(252 165 165); }
+  .dark .text-blue-700 { color: rgb(147 197 253); }
+  .dark .text-violet-700 { color: rgb(196 181 253); }
   .text-gradient {
     background: linear-gradient(135deg, #3395ff 0%, #6366f1 100%);
     -webkit-background-clip: text;
