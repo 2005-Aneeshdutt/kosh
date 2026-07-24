@@ -6,7 +6,10 @@ import { cn } from "@/lib/utils";
 export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("rounded-2xl border border-border bg-card p-6 shadow-card", className)}
+      className={cn(
+        "card-hover rounded-2xl border border-border/70 bg-card/90 p-6 shadow-card backdrop-blur-sm hover:shadow-elevated",
+        className,
+      )}
       {...props}
     />
   );
@@ -48,14 +51,14 @@ export function Badge({
 
 /* ── Button ───────────────────────────────────────────── */
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-50 disabled:pointer-events-none",
+  "group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-xl text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]",
   {
     variants: {
       variant: {
-        primary: "bg-brand text-white hover:bg-brand-dark shadow-sm",
-        secondary: "bg-white text-ink border border-border hover:bg-slate-50",
-        ghost: "text-muted hover:bg-slate-100 hover:text-ink",
-        danger: "bg-danger text-white hover:brightness-95",
+        primary: "bg-brand-gradient bg-[length:180%_180%] text-white shadow-glow hover:shadow-glow-lg hover:bg-[position:100%_50%]",
+        secondary: "border border-border bg-white/90 text-ink backdrop-blur hover:border-brand/30 hover:bg-white hover:shadow-sm",
+        ghost: "text-muted hover:bg-slate-100/80 hover:text-ink",
+        danger: "bg-danger text-white shadow-sm hover:brightness-95",
       },
       size: {
         sm: "h-8 px-3",
@@ -89,7 +92,7 @@ export function Progress({
   return (
     <div className={cn("h-2 w-full overflow-hidden rounded-full bg-slate-100", className)}>
       <div
-        className={cn("h-full rounded-full bg-brand transition-all", barClassName)}
+        className={cn("h-full rounded-full bg-brand-gradient transition-all duration-500", barClassName)}
         style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
       />
     </div>
