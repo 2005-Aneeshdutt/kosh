@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard, Wallet, Rocket, Brain, Gauge, Boxes, FileCheck2, TrendingUp, Table2, Mail, Settings, Bot,
+  LayoutDashboard, Wallet, Rocket, Brain, Gauge, Boxes, FileCheck2, TrendingUp, Table2, Mail, Settings, Bot, ScrollText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLive } from "@/context/LiveContext";
@@ -17,6 +17,7 @@ const NAV = [
   { to: "/reconciliation", label: "Reconciliation", icon: FileCheck2 },
   { to: "/forecast", label: "Forecast", icon: TrendingUp },
   { to: "/ledger", label: "Ledger", icon: Table2 },
+  { to: "/audit", label: "Audit Log", icon: ScrollText },
   { to: "/mail", label: "Outbox", icon: Mail },
 ];
 
@@ -27,7 +28,7 @@ const AGENTS = [
   { key: "pulse", name: "Pulse", color: "bg-pulse", desc: "Monitors payments" },
 ];
 
-export function Sidebar() {
+export function Sidebar({ mobileOpen = false, onClose }: { mobileOpen?: boolean; onClose?: () => void }) {
   const { connected } = useLive();
   const { pathname } = useLocation();
   const [disabled, setDisabled] = useState<Set<string>>(new Set());
@@ -38,8 +39,18 @@ export function Sidebar() {
       .then((c) => setDisabled(new Set(c.agents.filter((a) => !a.enabled).map((a) => a.key))))
       .catch(() => {});
   }, [pathname]);
+
+  // Close the mobile drawer whenever the route changes.
+  useEffect(() => { onClose?.(); }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
-    <aside className="relative z-20 flex h-screen w-64 shrink-0 flex-col overflow-hidden bg-navy-gradient text-slate-300">
+    <aside
+      data-tour="nav"
+      className={cn(
+        "fixed inset-y-0 left-0 z-40 flex h-screen w-64 shrink-0 flex-col overflow-hidden bg-navy-gradient text-slate-300 transition-transform duration-300 lg:static lg:z-20 lg:translate-x-0 scroll-thin overflow-y-auto",
+        mobileOpen ? "translate-x-0 shadow-pop" : "-translate-x-full",
+      )}
+    >
       {/* subtle top glow */}
       <div className="pointer-events-none absolute -top-24 left-1/2 h-48 w-72 -translate-x-1/2 rounded-full bg-brand/20 blur-3xl" />
 

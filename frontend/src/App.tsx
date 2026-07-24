@@ -17,6 +17,7 @@ import { ImpactPage } from "@/pages/ImpactPage";
 import { AgentsPage } from "@/pages/AgentsPage";
 import { StudioPage } from "@/pages/StudioPage";
 import { LedgerPage } from "@/pages/LedgerPage";
+import { AuditPage } from "@/pages/AuditPage";
 import { MailPage } from "@/pages/MailPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 
@@ -50,6 +51,7 @@ function Shell() {
             <Route path="/reconciliation" element={<ReconciliationPage />} />
             <Route path="/forecast" element={<ForecastPage />} />
             <Route path="/ledger" element={<LedgerPage />} />
+            <Route path="/audit" element={<AuditPage />} />
             <Route path="/mail" element={<MailPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
