@@ -37,8 +37,9 @@ export function StudioPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card className="bg-navy-900 text-white">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <Card className="relative overflow-hidden bg-navy-gradient text-white">
+        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-brand/20 blur-3xl animate-aurora-move" />
+        <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-brand" />

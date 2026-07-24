@@ -29,15 +29,15 @@ export function LoginPage() {
   return (
     <div className="flex min-h-screen">
       {/* Left — brand / value prop */}
-      <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-navy-900 p-12 text-white lg:flex">
+      <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-navy-gradient p-12 text-white lg:flex">
         <div className="absolute inset-0 grid-bg opacity-40" />
         <div
-          className="absolute -right-24 -top-24 h-96 w-96 rounded-full opacity-30 blur-3xl"
+          className="absolute -right-24 -top-24 h-96 w-96 rounded-full opacity-40 blur-3xl animate-aurora-move"
           style={{ background: "radial-gradient(circle,#3395FF,transparent 70%)" }}
         />
         <div
-          className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full opacity-20 blur-3xl"
-          style={{ background: "radial-gradient(circle,#8B5CF6,transparent 70%)" }}
+          className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full opacity-25 blur-3xl animate-aurora-move"
+          style={{ background: "radial-gradient(circle,#8B5CF6,transparent 70%)", animationDelay: "-7s" }}
         />
 
         <div className="relative flex items-center gap-3">
@@ -73,8 +73,11 @@ export function LoginPage() {
           </div>
         </div>
 
-        <div className="relative text-xs text-slate-500">
-          Built on the Razorpay ecosystem &amp; the Claude Agent SDK
+        <div className="relative flex items-center justify-between text-xs text-slate-500">
+          <span>Built on the Razorpay ecosystem &amp; the Claude Agent SDK</span>
+          <span className="flex items-center gap-1.5 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1 font-medium text-emerald-300">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-glow-pulse" /> 4 agents online
+          </span>
         </div>
       </div>
 

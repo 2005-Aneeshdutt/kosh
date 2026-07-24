@@ -43,7 +43,8 @@ export function MetricCards({ cards, liveKey }: { cards: MetricCardType[]; liveK
         const up = c.trend_direction === "up";
         const pulsing = liveKey === c.key;
         return (
-          <Card key={c.key} className={cn("relative overflow-hidden p-5 transition-shadow", pulsing && "shadow-glow")}>
+          <Card key={c.key} className={cn("relative overflow-hidden p-5 transition-shadow", pulsing && "shadow-glow ring-1 ring-brand/30")}>
+            <div className="absolute inset-x-0 top-0 h-1" style={{ background: `linear-gradient(90deg, ${color}, transparent)` }} />
             <div className="absolute right-0 top-0 h-16 w-16 rounded-full opacity-[0.06] blur-2xl" style={{ background: color }} />
             <div className="text-xs font-semibold uppercase tracking-wide text-muted">{c.label}</div>
             <div className="mt-1.5 flex items-end justify-between">
