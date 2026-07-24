@@ -39,6 +39,35 @@ def score_invoice(invoice: dict[str, Any]) -> float:
     return round(_clamp(score), 3)
 
 
+def score_factors(invoice: dict[str, Any]) -> list[dict[str, Any]]:
+    """Explain a risk score: the weighted signals that produced it.
+
+    Returns one row per factor with its raw value, normalised 0..1 signal, the
+    weight applied, and its points contribution — the data behind the
+    'explain this decision' trace.
+    """
+    days_overdue = invoice.get("days_overdue", 0)
+    reminders = invoice.get("reminders_sent", 0)
+    amount = invoice.get("amount", 0)
+
+    signals = [
+        ("Days overdue", f"{days_overdue} days", _clamp(days_overdue / 90.0), 0.40),
+        ("Customer history", f"{reminders} prior reminders", _clamp(reminders / 3.0), 0.30),
+        ("Invoice size", f"₹{amount / 100:,.0f}", _clamp(amount / 25_000_000), 0.15),
+        ("Reminder fatigue", f"{reminders} sent", _clamp(reminders / 4.0), 0.15),
+    ]
+    return [
+        {
+            "label": label,
+            "value": value,
+            "signal": round(signal, 3),
+            "weight": weight,
+            "contribution": round(signal * weight, 3),
+        }
+        for label, value, signal, weight in signals
+    ]
+
+
 def risk_band(score: float) -> str:
     if score >= 0.66:
         return "critical"

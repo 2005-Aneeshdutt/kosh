@@ -37,6 +37,12 @@ async def _execute_run() -> None:
         store.set_run(final)
         for k in store.status:
             store.status[k] = "done"
+        from backend.services import audit
+        reminders = len(final.get("collection_actions", []))
+        audit.agent(
+            "Agent crew", "agents.run",
+            detail=f"Full pipeline completed · {reminders} reminders drafted, forecast & recon refreshed",
+        )
     except Exception:
         # Never swallow a failed run silently — it hides real bugs.
         logger.exception("Agent pipeline failed")

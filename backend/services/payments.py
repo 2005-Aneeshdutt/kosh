@@ -11,7 +11,7 @@ import re
 import uuid
 from typing import Any, Optional
 
-from backend.services import mailer, sheets
+from backend.services import audit, mailer, sheets
 from backend.services.live_data import live
 
 # Predictable test instruments (mirrors how Razorpay test cards behave).
@@ -143,6 +143,11 @@ def process_invoice_payment(
         }
     )
     status = "captured"
+    audit.record(
+        "system", inv["customer_name"], "payment.captured",
+        target=invoice_id, amount=inv["amount"],
+        detail=f"{card_brand(details.get('card_number','')) if method == 'card' else method.upper()} · invoice settled",
+    )
 
     return {
         "success": success,

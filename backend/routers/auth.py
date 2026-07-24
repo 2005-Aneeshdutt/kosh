@@ -4,7 +4,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel
 
-from backend.services import auth
+from backend.services import audit, auth
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -40,6 +40,7 @@ def login(req: LoginRequest) -> LoginResponse:
         raise HTTPException(status_code=401, detail="Invalid email or password")
     token = auth.create_session(req.email)
     session = auth.get_session(token)
+    audit.human(session.get("name", req.email), "user.login", detail="Signed in to the dashboard")
     return LoginResponse(token=token, user=SessionUser(**_public(session)))
 
 

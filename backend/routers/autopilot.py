@@ -4,7 +4,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from backend.services import autopilot as ap
+from backend.services import audit, autopilot as ap
 
 router = APIRouter(prefix="/api/autopilot", tags=["autopilot"])
 
@@ -28,7 +28,13 @@ async def stop() -> dict:
 
 @router.post("/scan")
 def scan() -> dict:
-    return ap.scan()
+    result = ap.scan()
+    if result.get("auto_executed"):
+        audit.agent(
+            "Autopilot", "proposal.auto_executed",
+            detail=f"{result['auto_executed']} reminders sent within policy · {result.get('pending', 0)} queued for approval",
+        )
+    return result
 
 
 @router.get("/proposals")
@@ -41,6 +47,11 @@ def approve(proposal_id: str) -> dict:
     p = ap.approve(proposal_id)
     if not p:
         raise HTTPException(status_code=404, detail="Proposal not found or already handled")
+    audit.human(
+        "You", "proposal.approved",
+        target=p.get("invoice_id"), amount=p.get("amount"),
+        detail=f"Approved reminder to {p.get('customer_name')} ({p.get('risk_band')} risk)",
+    )
     return p
 
 
@@ -49,6 +60,11 @@ def reject(proposal_id: str) -> dict:
     p = ap.reject(proposal_id)
     if not p:
         raise HTTPException(status_code=404, detail="Proposal not found or already handled")
+    audit.human(
+        "You", "proposal.rejected",
+        target=p.get("invoice_id"), amount=p.get("amount"),
+        detail=f"Rejected reminder to {p.get('customer_name')}",
+    )
     return p
 
 
