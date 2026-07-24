@@ -9,6 +9,7 @@ import {
 } from "recharts";
 import { Card, CardHeader, CardTitle } from "@/components/ui/primitives";
 import { formatPaisaCompact, formatPaisa } from "@/lib/format";
+import { tooltipContentStyle, tooltipItemStyle, tooltipLabelStyle } from "@/lib/chart";
 import type { ARAgingResponse } from "@/lib/api";
 
 const COLORS = ["#10B981", "#3B82F6", "#F59E0B", "#EF4444"];
@@ -46,7 +47,9 @@ export function ARAgingChart({ data }: { data: ARAgingResponse }) {
               `${formatPaisa(v)} · ${p.payload.count} invoice(s)`,
               "Outstanding",
             ]}
-            contentStyle={{ borderRadius: 12, border: "1px solid #E2E8F0", fontSize: 12 }}
+            contentStyle={tooltipContentStyle}
+            itemStyle={tooltipItemStyle}
+            labelStyle={tooltipLabelStyle}
           />
           <Bar dataKey="amount" radius={[8, 8, 0, 0]} maxBarSize={64}>
             {rows.map((r, i) => (

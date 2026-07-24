@@ -10,6 +10,7 @@ import {
 } from "recharts";
 import { Card, CardHeader, CardTitle } from "@/components/ui/primitives";
 import { formatPaisaCompact, formatPaisa } from "@/lib/format";
+import { tooltipContentStyle, tooltipItemStyle, tooltipLabelStyle } from "@/lib/chart";
 import type { ForecastResponse } from "@/lib/api";
 
 export function CashflowForecast({ data }: { data: ForecastResponse }) {
@@ -58,9 +59,11 @@ export function CashflowForecast({ data }: { data: ForecastResponse }) {
           />
           <Tooltip
             formatter={(v: number) => [formatPaisa(v), "Net position"]}
-            contentStyle={{ borderRadius: 12, border: "1px solid #E2E8F0", fontSize: 12 }}
+            contentStyle={tooltipContentStyle}
+            itemStyle={tooltipItemStyle}
+            labelStyle={tooltipLabelStyle}
           />
-          <ReferenceLine y={0} stroke="#E2E8F0" />
+          <ReferenceLine y={0} stroke="rgb(var(--c-border))" />
           <Area
             type="monotone"
             dataKey="forecast"

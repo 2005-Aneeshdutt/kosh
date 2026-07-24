@@ -13,6 +13,7 @@ import { AlertTriangle, Info, TrendingUp } from "lucide-react";
 import { Card, CardHeader, CardTitle, Badge } from "@/components/ui/primitives";
 import { api, type ForecastResponse } from "@/lib/api";
 import { formatPaisa, formatPaisaCompact } from "@/lib/format";
+import { tooltipContentStyle, tooltipItemStyle, tooltipLabelStyle } from "@/lib/chart";
 import { cn } from "@/lib/utils";
 import { useRun } from "@/context/RunContext";
 
@@ -105,9 +106,11 @@ export function ForecastPage() {
             />
             <Tooltip
               formatter={(v: number) => formatPaisa(v)}
-              contentStyle={{ borderRadius: 12, border: "1px solid #E2E8F0", fontSize: 12 }}
+              contentStyle={tooltipContentStyle}
+              itemStyle={tooltipItemStyle}
+              labelStyle={tooltipLabelStyle}
             />
-            <ReferenceLine y={0} stroke="#E2E8F0" />
+            <ReferenceLine y={0} stroke="rgb(var(--c-border))" />
             <Area
               type="monotone"
               dataKey="forecast"
