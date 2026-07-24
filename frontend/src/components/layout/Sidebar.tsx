@@ -39,16 +39,22 @@ export function Sidebar() {
       .catch(() => {});
   }, [pathname]);
   return (
-    <aside className="flex h-screen w-64 shrink-0 flex-col bg-navy-900 text-slate-300">
-      <div className="flex items-center gap-3 px-6 py-6">
-        <img src="/kosh-logo.svg" alt="Kosh" className="h-9 w-9" />
+    <aside className="relative z-20 flex h-screen w-64 shrink-0 flex-col overflow-hidden bg-navy-gradient text-slate-300">
+      {/* subtle top glow */}
+      <div className="pointer-events-none absolute -top-24 left-1/2 h-48 w-72 -translate-x-1/2 rounded-full bg-brand/20 blur-3xl" />
+
+      <div className="relative flex items-center gap-3 px-6 py-6">
+        <div className="relative">
+          <img src="/kosh-logo.svg" alt="Kosh" className="h-9 w-9" />
+          <div className="absolute inset-0 -z-10 rounded-xl bg-brand/40 blur-lg animate-glow-pulse" />
+        </div>
         <div>
           <div className="font-display text-lg font-extrabold tracking-tight text-white">Kosh</div>
           <div className="text-[11px] font-medium text-slate-400">कोष · Revenue Ops</div>
         </div>
       </div>
 
-      <nav className="flex flex-col gap-1 px-3">
+      <nav className="relative flex flex-col gap-1 px-3">
         {NAV.map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
@@ -56,8 +62,10 @@ export function Sidebar() {
             end={end}
             className={({ isActive }) =>
               cn(
-                "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
-                isActive ? "bg-brand text-white shadow-glow" : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
+                "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
+                isActive
+                  ? "bg-brand-gradient text-white shadow-glow"
+                  : "text-slate-400 hover:bg-white/[0.06] hover:text-white"
               )
             }
           >
@@ -69,8 +77,8 @@ export function Sidebar() {
           to="/settings"
           className={({ isActive }) =>
             cn(
-              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
-              isActive ? "bg-brand text-white shadow-glow" : "text-slate-400 hover:bg-white/5 hover:text-slate-100"
+              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
+              isActive ? "bg-brand-gradient text-white shadow-glow" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"
             )
           }
         >

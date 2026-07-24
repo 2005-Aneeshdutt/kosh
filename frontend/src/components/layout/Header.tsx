@@ -55,7 +55,7 @@ export function Header({ path }: { path: string }) {
   const meta = TITLES[path] ?? TITLES["/"];
 
   return (
-    <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border glass px-8 py-4">
+    <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border/60 glass px-8 py-4 after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-brand/40 after:to-transparent">
       <div>
         <div className="flex items-center gap-2">
           <h1 className="font-display text-xl font-bold text-ink">{meta.title}</h1>
@@ -65,7 +65,7 @@ export function Header({ path }: { path: string }) {
               connected ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"
             )}
           >
-            <Radio className="h-2.5 w-2.5" /> {connected ? "LIVE" : "…"}
+            <Radio className={cn("h-2.5 w-2.5", connected && "animate-glow-pulse")} /> {connected ? "LIVE" : "…"}
           </span>
         </div>
         <p className="text-sm text-muted">{meta.subtitle}</p>
