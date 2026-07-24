@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { Sparkles, Loader2, Radio, ChevronDown, LogOut, Play, Pause } from "lucide-react";
+import { Sparkles, Loader2, Radio, ChevronDown, LogOut, Play, Pause, Sun, Moon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/primitives";
 import { useRun } from "@/context/RunContext";
 import { useLive } from "@/context/LiveContext";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/context/ThemeContext";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +28,7 @@ export function Header({ path }: { path: string }) {
   const { running, runAll } = useRun();
   const { connected } = useLive();
   const { user, logout } = useAuth();
+  const { theme, toggle: toggleTheme } = useTheme();
   const [demo, setDemo] = useState(true);
   const [simOn, setSimOn] = useState(true);
   const [menu, setMenu] = useState(false);
@@ -72,6 +74,15 @@ export function Header({ path }: { path: string }) {
       </div>
 
       <div className="flex items-center gap-3">
+        <button
+          onClick={toggleTheme}
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-border text-muted transition hover:border-brand/30 hover:text-brand"
+          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          aria-label="Toggle color theme"
+        >
+          {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </button>
+
         <button
           onClick={toggleSim}
           className={cn(

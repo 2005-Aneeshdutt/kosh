@@ -5,6 +5,16 @@
     <link rel="icon" type="image/svg+xml" href="/kosh-logo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Kosh — Revenue Operations Copilot</title>
+    <script>
+      // Set the theme before paint to avoid a flash of the wrong mode.
+      (function () {
+        try {
+          var s = localStorage.getItem("kosh-theme");
+          var dark = s ? s === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+          if (dark) document.documentElement.classList.add("dark");
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
