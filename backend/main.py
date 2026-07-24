@@ -20,6 +20,7 @@ from backend.config import settings
 from backend.models import database
 from backend.routers import (
     agents,
+    audit,
     auth,
     autopilot,
     chat,
@@ -111,6 +112,7 @@ app.include_router(chat.router)
 app.include_router(autopilot.router)
 app.include_router(insights.router)
 app.include_router(studio.router)
+app.include_router(audit.router)
 
 
 # ── Serve the built React SPA from the same origin ──────────

@@ -51,6 +51,19 @@ def init_db() -> None:
                 key   TEXT PRIMARY KEY,
                 value TEXT NOT NULL
             );
+
+            CREATE TABLE IF NOT EXISTS audit_log (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                ts          TEXT NOT NULL,
+                actor_type  TEXT NOT NULL,   -- agent | human | system
+                actor       TEXT NOT NULL,
+                action      TEXT NOT NULL,
+                target      TEXT,
+                detail      TEXT,
+                amount      INTEGER,
+                metadata    TEXT
+            );
+            CREATE INDEX IF NOT EXISTS idx_audit_ts ON audit_log (id DESC);
             """
         )
 
@@ -96,6 +109,71 @@ def record_event(
                 _now(),
             ),
         )
+
+
+# ── Audit log (immutable activity trail) ────────────────────
+def record_audit(
+    actor_type: str,
+    actor: str,
+    action: str,
+    target: Optional[str] = None,
+    detail: Optional[str] = None,
+    amount: Optional[int] = None,
+    metadata: Optional[dict[str, Any]] = None,
+) -> None:
+    with _conn() as conn:
+        conn.execute(
+            "INSERT INTO audit_log (ts, actor_type, actor, action, target, detail, amount, metadata) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                _now(),
+                actor_type,
+                actor,
+                action,
+                target,
+                detail,
+                amount,
+                json.dumps(metadata) if metadata else None,
+            ),
+        )
+
+
+def query_audit(
+    limit: int = 100,
+    actor_type: Optional[str] = None,
+    action_prefix: Optional[str] = None,
+) -> list[dict[str, Any]]:
+    clauses, params = [], []
+    if actor_type and actor_type != "all":
+        clauses.append("actor_type = ?")
+        params.append(actor_type)
+    if action_prefix:
+        clauses.append("action LIKE ?")
+        params.append(f"{action_prefix}%")
+    where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+    params.append(limit)
+    with _conn() as conn:
+        rows = conn.execute(
+            f"SELECT * FROM audit_log {where} ORDER BY id DESC LIMIT ?", params
+        ).fetchall()
+    out: list[dict[str, Any]] = []
+    for r in rows:
+        d = dict(r)
+        d["metadata"] = json.loads(d["metadata"]) if d.get("metadata") else None
+        out.append(d)
+    return out
+
+
+def audit_summary() -> dict[str, int]:
+    with _conn() as conn:
+        total = conn.execute("SELECT COUNT(*) AS c FROM audit_log").fetchone()["c"]
+        by_type = conn.execute(
+            "SELECT actor_type, COUNT(*) AS c FROM audit_log GROUP BY actor_type"
+        ).fetchall()
+    summary = {"total": total, "agent": 0, "human": 0, "system": 0}
+    for r in by_type:
+        summary[r["actor_type"]] = r["c"]
+    return summary
 
 
 # ── Settings overrides (persisted across restarts) ──────────
