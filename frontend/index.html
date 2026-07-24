@@ -12,6 +12,8 @@
           var s = localStorage.getItem("kosh-theme");
           var dark = s ? s === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
           if (dark) document.documentElement.classList.add("dark");
+          if (localStorage.getItem("kosh-density") === "compact")
+            document.documentElement.classList.add("density-compact");
         } catch (e) {}
       })();
     </script>

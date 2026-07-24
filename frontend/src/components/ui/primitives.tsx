@@ -79,6 +79,20 @@ export function Button({
   return <button className={cn(buttonVariants({ variant, size }), className)} {...props} />;
 }
 
+/* ── Skeleton ─────────────────────────────────────────── */
+export function Skeleton({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-lg bg-slate-200/70 dark:bg-white/5",
+        "before:absolute before:inset-0 before:-translate-x-full before:animate-shimmer",
+        "before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent dark:before:via-white/10",
+        className,
+      )}
+    />
+  );
+}
+
 /* ── Progress bar ─────────────────────────────────────── */
 export function Progress({
   value,
