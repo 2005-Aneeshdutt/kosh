@@ -1,14 +1,40 @@
-**# Kosh (कोष) — Multi-Agent Revenue Operations for Razorpay Merchants
+# Kosh (कोष) — Multi-Agent Revenue Operations for Razorpay Merchants
 
 > Connect your Razorpay account → Kosh's **4 AI agents** start working immediately.
 > Collections happen automatically, settlements reconcile in seconds, cashflow is
 > predicted daily, and payment anomalies are caught before they cost you money.
 
-Kosh is an AI Revenue-Operations Copilot  that  deploys a crew of four specialized agents — orchestrated with
-**LangGraph** over a shared merchant state and reasoning with **Claude
-(Sonnet 5)** — all visible through a single real-time dashboard.
+Kosh is an AI Revenue-Operations Copilot that deploys a crew of four specialized
+agents — orchestrated with **LangGraph** over a shared merchant state and
+reasoning with **Claude** (via OpenRouter or the Anthropic API) — all visible
+through a single real-time dashboard.
 
-![agents](https://img.shields.io/badge/agents-4-3B82F6) ![demo](https://img.shields.io/badge/demo_mode-zero_config-10B981) ![stack](https://img.shields.io/badge/FastAPI%20%2B%20React-informational)
+![agents](https://img.shields.io/badge/agents-4-3B82F6)
+![orchestration](https://img.shields.io/badge/LangGraph-orchestrated-8B5CF6)
+![demo](https://img.shields.io/badge/demo_mode-zero_config-10B981)
+![stack](https://img.shields.io/badge/FastAPI%20%2B%20React-informational)
+![theme](https://img.shields.io/badge/light%20%2F%20dark-theme_aware-0EA5E9)
+
+---
+
+## Contents
+
+- [The crew](#the-crew)
+- [A live, shippable product — not a mockup](#a-live-shippable-product--not-a-mockup)
+- [Built to impress: the operator experience](#built-to-impress-the-operator-experience)
+- [Autopilot — autonomy *with* guardrails](#autopilot--autonomy-with-guardrails)
+- [Kosh Copilot — a chatbot that *does* things](#kosh-copilot--a-chatbot-that-does-things)
+- [More surfaces](#more-surfaces-studio-impact-strategist-ask-your-books)
+- [The 60-second demo](#the-60-second-demo)
+- [Zero-config demo mode](#zero-config-demo-mode)
+- [Architecture](#architecture)
+- [Quick start](#quick-start--one-command-one-link)
+- [Configuration](#configuration-env)
+- [Turning on real email](#turning-on-real-email-gmail-2-minutes)
+- [Production hardening roadmap](#production-hardening--razorpay-integration-roadmap)
+- [API surface](#api-surface)
+- [Project layout](#project-layout)
+- [Tech stack](#tech-stack)
 
 ---
 
@@ -22,7 +48,8 @@ Kosh is an AI Revenue-Operations Copilot  that  deploys a crew of four specializ
 | 🟠 **Pulse** | amber | Monitors payment **success rates**, detects anomalies via z-score, and surfaces specific, actionable insights. |
 
 They run **in parallel** from a single "Run All Agents" click, and every step
-streams to the dashboard's **Agent Activity feed** over Server-Sent Events.
+streams to the dashboard's **Agent Activity feed** over Server-Sent Events. Each
+agent can be toggled on/off and inspected in **Agent Studio**.
 
 ---
 
@@ -46,9 +73,33 @@ Kosh behaves like a real SaaS you sign into and operate:
   SMTP** once you add credentials (Settings → Email; a Gmail app-password works).
 - **Real-time sheet sync.** A live **Ledger** page streams every transaction,
   exports to **CSV**, and pushes to a **Google Sheet** in real time via an Apps
-  Script webhook (Settings → Google Sheets; the 12-line script is provided).
+  Script webhook (Settings → Google Sheets; the script is provided).
 - **Always-alive data.** A background **payment simulator** streams realistic
   transactions so the dashboard is never static (toggle it from the header).
+- **An immutable audit trail.** Every agent, human and system action —
+  reminders, approvals, captured payments, agent runs, logins — is recorded to a
+  filterable **Audit Log** with correct attribution (You / Collect agent /
+  Copilot / Autopilot).
+
+---
+
+## Built to impress: the operator experience
+
+The product is designed to feel like a premium, modern fintech console:
+
+- **⌘K Command Palette.** Fuzzy-search everything — jump to any page, run the
+  agents, flip the theme, or fire a Copilot prompt — without touching the mouse.
+- **Guided tour.** A first-run spotlight walks a new viewer through the nav, live
+  metrics, the agent crew, ⌘K and the Copilot. Restartable any time.
+- **Light / dark, and comfortable / compact.** A theme toggle (system-aware, no
+  flash on load) and a density toggle that tightens the whole app — both persist.
+- **Live anomaly banner.** When payment metrics deviate (z-score over daily
+  success rate / volume), a dismissible alert surfaces on the dashboard.
+- **Explainable-AI decision trace.** Click any risk score in Collections to see
+  the *weighted factors* — days overdue, customer history, invoice size, reminder
+  fatigue — that produced it, plus the recommended action.
+- **Responsive.** A slide-in sidebar drawer, collapsing header controls, and
+  skeleton loaders keep it usable from desktop to phone.
 
 ---
 
@@ -71,7 +122,7 @@ machine may take alone. Kosh's **Autopilot** makes that explicit:
 
 Thresholds are tunable at runtime (`POST /api/autopilot/policy`). This is the
 pattern a payments company actually needs: autonomy where it's safe, a human
-where it matters.
+where it matters — and every decision lands in the Audit Log.
 
 ---
 
@@ -87,23 +138,38 @@ router offline):
 | *"Who's overdue?"* | Ranked chase list by risk |
 | *"Remind Bangalore Brew House"* | Sends the reminder email + pay link |
 | *"Pay INV-1020"* | **Actually captures the payment** — dashboard updates live |
-| *"Give me a pay link for INV-1024"* | Returns an **Open checkout** button |
+| *"How much did Cardamom & Co. pay?"* | Answers from your books with **citations** (RAG) |
 | *"Run the agents"* | Launches the four-agent crew |
 
 ---
 
-## The 60-second demo script
+## More surfaces: Studio, Impact, Strategist, Ask-your-books
 
-1. **Sign in** (one click).
+- **Agent Studio** — configure, enable/disable, and inspect the crew: each agent's
+  tools, system prompt, live status and the LangGraph execution graph, with a
+  "deploy & run" button and an animated pipeline.
+- **Impact** — the ROI story: annual value, hours saved, cash recovered and DSO
+  reduction, in a with-vs-without comparison.
+- **Strategist** — turns live data into a prioritised brief of recommendations,
+  each with a rationale and a one-click action, plus an inline "ask the
+  strategist" chat.
+- **Ask your books (RAG)** — the Copilot retrieves over your payments, invoices
+  and settlements and answers grounded questions with citations.
+
+---
+
+## The 60-second demo
+
+1. **Sign in** (one click) — then press **⌘K** to see you can drive everything.
 2. **Run All Agents** — watch the crew work the live feed; reminder emails land in
-   the **Outbox**.
-3. **Autopilot** → **Engage** — see proposals appear, some auto-executed within
+   the **Outbox**, and each send appears in the **Audit Log**.
+3. **Autopilot** → **Engage** — proposals appear, some auto-executed within
    policy, the rest waiting for you. **Approve** one and watch it fire.
 4. **Reconciliation** → **Use demo statement** (or drop
-   `seed/sample_bank_statement.csv`) → Recon matches **88.5%** and explains the
-   gaps in plain English.
-5. **Collections** → **Pay link** on an overdue invoice → the Razorpay-style
-   checkout opens. Pay with `4111 1111 1111 1111`.
+   `seed/sample_bank_statement.csv`) → Recon matches and explains the gaps.
+5. **Collections** → click a **risk score** to see the decision trace → **Pay
+   link** on an overdue invoice → the Razorpay-style checkout opens. Pay with
+   `4111 1111 1111 1111`.
 6. Flip to the **Dashboard** — revenue animates up, the invoice is gone from
    Collections, the **Ledger** has a new row, the receipt is in the **Outbox**.
 7. Ask the **Copilot**: *"who's overdue?"* → *"pay INV-1021"* → watch it collect.
@@ -113,7 +179,7 @@ router offline):
 ## Zero-config demo mode
 
 The app runs **fully offline with realistic mock data** — no Razorpay keys, no
-Claude key required. The demo merchant *Artisan Coffee Co.* has a story baked in
+LLM key required. The demo merchant *Artisan Coffee Co.* has a story baked in
 that the agents discover on their own:
 
 - A large overdue invoice from **Bangalore Brew House** (₹1,20,000) that threatens Friday payroll.
@@ -121,8 +187,8 @@ that the agents discover on their own:
 - A projected **Thursday cash crunch** (Oracle warns about it).
 - A bank statement with a few intentional unmatched / discrepant rows (Recon flags them).
 
-Set `ANTHROPIC_API_KEY` to upgrade the agent copy from deterministic templates to
-live, Claude-authored reminders, summaries and insights — everything else is
+Set an LLM key (see below) to upgrade the agent copy from deterministic templates
+to live, model-authored reminders, summaries and insights — everything else is
 identical.
 
 ---
@@ -130,17 +196,20 @@ identical.
 ## Architecture
 
 ```
- React 18 + Tailwind + Recharts + Framer Motion  (frontend/)
-        │  REST + SSE
+ React 18 + Tailwind + Recharts + Framer Motion   (frontend/)
+        │  REST + SSE  ·  light/dark theming  ·  ⌘K palette
         ▼
- FastAPI  (backend/main.py)
+ FastAPI  (backend/main.py)  — serves the API AND the built SPA at one URL
         │
  LangGraph orchestrator  (agents/orchestrator.py)
    fetch_data → [ pulse ∥ oracle ∥ collect ] → recon → summarize
-        │  shared MerchantState
-        ├── Razorpay SDK client (demo + live)   razorpay_client/
-        ├── Claude (Sonnet 5) w/ offline fallback  services/llm.py
-        └── SQLite  (runs, events, settings)
+        │  shared MerchantState  ·  streamed over an SSE event bus
+        ├── Razorpay SDK client (demo + live)     razorpay_client/
+        ├── LLM provider switch                    services/llm.py
+        │     OpenRouter  →  Anthropic  →  offline deterministic templates
+        ├── RAG over books (TF-IDF, citations)     services/knowledge.py
+        ├── Anomaly detector (z-score)             services/anomaly_detector.py
+        └── SQLite  (runs, events, audit log, settings)   models/database.py
 ```
 
 > **Why the SDK over MCP?** Kosh uses the `razorpay` Python SDK directly inside
@@ -192,16 +261,25 @@ docker compose up --build         # app on :5173, API on :8000
 
 ## Configuration (`.env`)
 
+Copy `.env.example` to `.env` and fill in only what you need — **everything is
+optional in demo mode.**
+
 | Variable | Default | Purpose |
 |----------|---------|---------|
 | `DEMO_MODE` | `true` | Use mock data; no Razorpay calls. |
 | `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | — | Live Razorpay test/live keys. |
-| `ANTHROPIC_API_KEY` | — | Enables live Claude agent copy (optional). |
-| `KOSH_MODEL` | `claude-sonnet-5` | Model used by all agents. |
+| `OPENROUTER_API_KEY` | — | Enables live LLM copy via OpenRouter (cost-optimal; **preferred**). |
+| `OPENROUTER_MODEL` | `anthropic/claude-3.5-haiku` | Model used when OpenRouter is active. |
+| `ANTHROPIC_API_KEY` | — | Alternative LLM backend (used if no OpenRouter key). |
 | `CORS_ORIGINS` | `localhost:5173` | Allowed frontend origins. |
 | `KOSH_PUBLIC_URL` | `http://localhost:8000` | Base URL used for pay links inside emails. |
 | `KOSH_SMTP_*` | — | Real email delivery (see below). |
 | `KOSH_MAIL_REDIRECT` | — | Deliver every demo email to one inbox. |
+| `KOSH_SHEETS_WEBHOOK` | — | Google Apps Script `/exec` URL for live Sheet sync. |
+
+**LLM provider precedence:** `OPENROUTER_API_KEY` → `ANTHROPIC_API_KEY` →
+offline. With no key set, Kosh runs on deterministic templates and every feature
+still works; `GET /api/health` reports the active provider and model.
 
 ---
 
@@ -245,8 +323,8 @@ Kosh is a working showcase, and these are the deliberate lines between *demo* an
 | **Card data / PCI** | The demo form accepts card fields to make the flow tangible. | **Never touch PAN.** Razorpay Checkout tokenises client-side; the server only ever sees a token/`payment_id`. No PCI scope. |
 | **Payment integrity** | Atomic in-process invoice claim prevents double-capture (stress-tested: 12 concurrent payments → exactly 1 capture). | **Idempotency keys** per payment attempt + DB constraints for exactly-once across replicas. |
 | **State & scale** | Single-process in-memory live dataset (correct for a single-node demo). | Postgres + **Redis** for shared state, multiple uvicorn workers, a queue for agent runs. |
-| **Agent safety** | Policy engine + human-in-the-loop approvals for risky actions. | Add full **audit log**, per-action RBAC, and rollback. |
-| **LLM** | Claude tool-calling with a deterministic offline fallback. | **Prompt-injection defence**, PII redaction before prompts, response schemas, evals + cost/latency tracing. |
+| **Agent safety** | Policy engine + human-in-the-loop approvals + a full **audit log**. | Per-action RBAC and rollback; signed, tamper-evident audit storage. |
+| **LLM** | Provider switch (OpenRouter / Anthropic) with a deterministic offline fallback. | **Prompt-injection defence**, PII redaction before prompts, response schemas, evals + cost/latency tracing. |
 | **Auth** | Token sessions, in-memory. | Real JWT + refresh, multi-tenant, OAuth onboarding to connect a merchant's Razorpay account. |
 | **Outreach** | Email (SMTP). | **WhatsApp/SMS** (the channel Indian SMBs actually read) with an escalation ladder. |
 | **Ecosystem** | Uses the Razorpay SDK directly. | Expose Kosh's tools as an **MCP server** so Razorpay **Agent Studio** / Claude Desktop can call them. |
@@ -259,7 +337,7 @@ Kosh is a working showcase, and these are the deliberate lines between *demo* an
 | Recon | Settlement reports, RazorpayX reconciliation |
 | Oracle (cashflow) | RazorpayX, **Razorpay Capital** (working-capital offers) |
 | Pulse (payment health) | Payment analytics, Optimizer / Smart Retry |
-| Autopilot | **Razorpay Agent Studio** (Claude Agent SDK) |
+| Autopilot / Studio | **Razorpay Agent Studio** (Claude Agent SDK) |
 
 ---
 
@@ -267,7 +345,7 @@ Kosh is a working showcase, and these are the deliberate lines between *demo* an
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/api/health` | Liveness + demo/LLM flags |
+| GET | `/api/health` | Liveness + demo/LLM provider flags |
 | GET | `/api/dashboard/metrics` | Metric cards (revenue, success rate, outstanding, forecast) |
 | GET | `/api/dashboard/ar-aging` | AR aging buckets (0-30/30-60/60-90/90+) |
 | GET | `/api/dashboard/payments` | Recent payments feed |
@@ -276,19 +354,25 @@ Kosh is a working showcase, and these are the deliberate lines between *demo* an
 | GET | `/api/agents/status` | Per-agent status |
 | GET | `/api/collections/debtors` | Risk-scored debtor list |
 | POST | `/api/collections/send-reminder` | Generate a reminder + payment link |
+| GET | `/api/collections/explain/{id}` | **Decision trace** — weighted factors behind a risk score |
 | POST | `/api/reconciliation/upload` | Upload a bank statement (CSV/PDF) |
 | GET | `/api/reconciliation/results` | Latest reconciliation result |
 | GET | `/api/forecast/cashflow` | 7-day forecast + alerts |
+| GET | `/api/anomalies` | Z-score payment anomalies + per-method health |
+| GET | `/api/audit` | Immutable activity trail (filterable by actor) |
 | GET/POST | `/api/settings/razorpay[/status]` | Manage credentials + demo mode |
 | POST | `/api/auth/login` · `/logout` · GET `/me` | Session auth |
 | GET | `/api/stream` | **SSE** stream of live business events |
 | GET | `/api/pay/{invoice_id}` | Public checkout data |
 | POST | `/api/checkout/order` · `/checkout/pay` | Create order · take payment |
-| POST | `/api/chat` | Kosh Copilot (answers + actions) |
+| POST | `/api/chat` | Kosh Copilot (answers + actions + RAG citations) |
 | GET/POST | `/api/autopilot/status` · `/start` · `/stop` · `/scan` | Autopilot control |
 | GET | `/api/autopilot/proposals` | Proposal queue |
 | POST | `/api/autopilot/proposals/{id}/approve` · `/reject` | Human-in-the-loop |
 | POST | `/api/autopilot/policy` | Tune auto-approve thresholds |
+| GET/POST | `/api/studio/config` · `/studio/agents/{key}` | Agent Studio config + toggles |
+| GET | `/api/impact` | ROI / with-vs-without impact model |
+| GET | `/api/strategist/brief` | Prioritised recommendations |
 | GET | `/api/ledger` · `/ledger/export.csv` | Live ledger · CSV export |
 | POST | `/api/ledger/sync` | Push ledger to Google Sheets |
 | GET | `/api/mail/outbox` · `/mail/{id}` | Email outbox + rendered HTML |
@@ -303,7 +387,7 @@ Kosh is a working showcase, and these are the deliberate lines between *demo* an
 ```
 backend/
   main.py                 FastAPI app + CORS + routers + SPA serving
-  config.py               env-backed settings
+  config.py               env-backed settings + LLM provider switch
   razorpay_client/        SDK wrapper (client.py) + rich mock_data.py
   agents/                 state, bus (SSE), 4 agents, orchestrator, store
   services/
@@ -311,24 +395,38 @@ backend/
     payments.py           checkout processing, test cards, receipts
     autopilot.py          proposals, policy engine, approvals, scheduler
     copilot.py            conversational assistant + action tools
-    mailer.py             HTML emails, outbox, SMTP delivery
-    sheets.py             ledger + CSV + Google Sheets sync
-    auth.py  simulator.py  llm.py  debtor_scorer.py
-    anomaly_detector.py   invoice_parser.py
-  models/                 schemas (Pydantic) + database (SQLite)
-  routers/                auth, dashboard, agents, collections, upload,
-                          forecast, settings, live, chat, autopilot
+    knowledge.py          RAG retrieval over books (TF-IDF + citations)
+    anomaly_detector.py   z-score anomaly detection + method health
+    audit.py              immutable activity-trail recorder
+    studio.py             Agent Studio config + enable/disable
+    impact.py  strategist.py   ROI model + recommendations
+    mailer.py  sheets.py  auth.py  simulator.py  llm.py  debtor_scorer.py
+  models/                 schemas (Pydantic) + database (SQLite + audit_log)
+  routers/                auth, dashboard, agents, collections, upload, forecast,
+                          settings, live, chat, autopilot, insights, studio, audit
 frontend/
   src/
-    components/           layout, agents, dashboard, collections, chat, ui
+    components/           layout, agents, dashboard, collections, chat,
+                          command (⌘K), onboarding (tour), ui
     pages/                Login, Checkout, Dashboard, Collections, Autopilot,
-                          Reconciliation, Forecast, Ledger, Mail, Settings
-    context/              AuthContext, LiveContext (SSE), RunContext
-    lib/                  api client, formatting helpers
+                          Strategist, Impact, Agents, Studio, Reconciliation,
+                          Forecast, Ledger, Audit, Mail, Settings
+    context/              AuthContext, LiveContext (SSE), RunContext, ThemeContext
+    lib/                  api client, formatting + chart theming helpers
 seed/
   generate_mock_data.py     regenerate the dataset
   sample_bank_statement.csv ← upload this on the Reconciliation page
 ```
+
+---
+
+## Tech stack
+
+**Backend** — Python 3.12, FastAPI, LangGraph, `sse-starlette`, SQLite, the
+Razorpay SDK, and a pluggable LLM layer (OpenRouter / Anthropic / offline).
+
+**Frontend** — React 18, TypeScript, Vite, Tailwind CSS, Recharts, Framer
+Motion, React Router — a single-origin SPA served by the same FastAPI process.
 
 ---
 
@@ -340,7 +438,13 @@ seed/
    this reconciliation + collections work; Kosh does it in ~30 seconds.
 3. **Built _on_ Razorpay, not against it** — uses the SDK, complements Agent
    Studio, showcases the payment ecosystem.
-4. **Production-grade UI** — a clean fintech dashboard, not a hackathon skin.
+4. **Production-grade UX** — a clean, theme-aware fintech console with ⌘K,
+   explainability and an audit trail, not a hackathon skin.
 5. **The demo data tells a story** — a UPI anomaly, overdue invoices, and a
    Thursday cash crunch, all discovered by the agents independently.
-**
+
+---
+
+## License
+
+Apache 2.0 — see [LICENSE](LICENSE).
